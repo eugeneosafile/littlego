@@ -9,7 +9,7 @@ export type Role = 'parent' | 'crew' | 'school_admin' | 'ops';
 export type ChildStatus = 'scheduled' | 'released' | 'on_board' | 'handed_over' | 'at_safe_hub' | 'absent';
 
 export interface User { id: number; name: string; phone: string; role: Role; crew_role: string | null }
-export interface Child { id: number; name: string; class_name: string; home_address: string }
+export interface Child { id: number; name: string; class_name: string; home_address: string; home_lat?: number | null; home_lon?: number | null }
 export interface TripChild {
   id: number; child: Child; stop_order: number; status: ChildStatus;
   released_at: string | null; boarded_at: string | null; handed_over_at: string | null; pin_locked: boolean;

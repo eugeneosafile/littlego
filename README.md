@@ -1,96 +1,88 @@
-# WardRide MVP
+# WardRide (v0.2, pilot-ready)
 
-Child-only school transport: vetted driver and escort on every trip, verified release at the school gate, PIN-checked handover at home, live tracking, camera access for parents, alerts and SOS.
+Child-only school transport: vetted driver and escort on every trip, verified release at the school gate, PIN-checked handover at home, live tracking and maps, camera access for parents, alerts and SOS.
 
 | Folder | What it is | Built with |
 | --- | --- | --- |
-| `backend/` | The API and all safety rules | Python 3.12+, FastAPI, SQLAlchemy (SQLite for dev, PostgreSQL for production) |
-| `web/` | School dashboard and ops centre | React + TypeScript (Vite) |
-| `mobile/` | Parent app and driver/escort app (one app; the screens change with the user's role) | React Native with Expo SDK 57 |
+| `backend/` | API, safety rules, SMS, payments, scheduled jobs | Python, FastAPI, SQLAlchemy, Alembic, PostgreSQL |
+| `web/` | School dashboard and ops centre, including set-up screens and live map | React + TypeScript (Vite), Leaflet |
+| `mobile/` | Parent app and driver/escort app (one app; screens follow the user's role) | React Native, Expo SDK 57 |
+
+- **[DEPLOY.md](DEPLOY.md)**: accounts to open, deploying on Render, Paystack webhook, building the Android app
+- **[PILOT_RUNBOOK.md](PILOT_RUNBOOK.md)**: set-up checklist, daily routine, what each alert means
+
+## What's in v0.2
+
+- **Real SMS**: Termii or Africa's Talking. A failed SMS never blocks a safety step; it is logged as FAILED for ops to follow up.
+- **SMS sign-in codes** for parents, crew and staff, with rate limits and lockouts. Only a hash of each code is stored.
+- **Paystack**: checkout (card, bank, USSD, transfer), signed webhook, underpayment check, and a "check payment" fallback.
+- **Ops set-up screens**: schools and staff, vehicles, crew vetting with evidence and expiry, family CSV import, printable QR cards, route builder, and daily trip creation.
+- **Scheduled jobs**: trips created at 05:00 on school days from routes and paid plans; a watchdog alerts when a vehicle stops reporting its location.
+- **Maps**: live map on the school and ops dashboards; vehicle, school and home map in the parent app.
+- **QR boarding**: crew scan the child's card with the phone camera. School gate staff can use a USB QR scanner.
+- **USSD**: parents without data dial a code to see their child's status and handover PIN.
+- **Hardening**:
+  - Handover PINs encrypted at rest.
+  - Production start-up refuses unsafe settings.
+  - Alembic migrations, CORS allow-list and security headers.
+  - API docs hidden in production.
+  - Deactivated accounts lose access immediately.
+  - All times in Lagos time.
 
 ## Run it locally
 
-### 1. API
-
 ```bash
+# API
 cd backend
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python -m app.seed            # creates demo data (fictional names)
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+python -m app.seed                                     # demo data (fictional)
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000   # docs at http://localhost:8000/docs
 
-API docs: http://localhost:8000/docs · Tests: `python -m pytest`
+# Dashboard (new terminal)
+cd web && npm install && npm run dev                   # http://localhost:5173
 
-### 2. School dashboard
-
-```bash
-cd web
-npm install
-npm run dev                   # http://localhost:5173
-```
-
-Set `VITE_API_URL` in `web/.env` if the API is not on `http://localhost:8000`.
-
-### 3. Mobile app
-
-```bash
-cd mobile
-npm install
+# Mobile (new terminal; phone on the same Wi-Fi with Expo Go)
+cd mobile && npm install
 EXPO_PUBLIC_API_URL=http://<your-computer-LAN-IP>:8000 npx expo start
 ```
 
-Scan the QR code with **Expo Go** on an Android phone or iPhone on the same Wi-Fi. On a phone, `localhost` means the phone itself, so use your computer's LAN IP address.
+In development, SMS messages (including sign-in codes and PINs) are printed in the API terminal instead of being sent.
 
-### Demo accounts (password `wardride123`)
+**Demo accounts** (password `wardride123`; or use an SMS code):
 
 | Role | Phone | Use in |
 | --- | --- | --- |
-| School admin (Greenfield Academy) | 08030000001 | Web |
-| Ops centre | 08030000002 | Web |
-| Driver, bus WR-14 | 08030000010 | Mobile |
-| Escort, bus WR-14 | 08030000011 | Mobile |
-| Parent (Tolu and Kemi) | 08030000100 | Mobile |
-| Parent (Chidera) | 08030000101 | Mobile |
+| School staff | 08030000001 | Web |
+| Ops | 08030000002 | Web |
+| Driver, WR-14 | 08030000010 | Mobile |
+| Parent of Tolu and Kemi | 08030000100 | Mobile |
 
-Children's card IDs for boarding: `CARD-TOLU`, `CARD-KEMI`, `CARD-CHIDERA`, `CARD-AMINA`.
+Card IDs for typed boarding: `CARD-TOLU`, `CARD-KEMI`, `CARD-CHIDERA`, `CARD-AMINA`.
 
-**Try the full journey:** driver starts the trip → school releases Tolu on the web → driver boards `CARD-TOLU` → parent sees "On board" and the PIN → driver taps Tolu, chooses an approved adult, enters the PIN.
+## Tests
 
-## Safety rules enforced by the API
+```bash
+cd backend && python -m pytest                          # 45 tests, SQLite
+WARDRIDE_TEST_DATABASE_URL=postgresql+psycopg://user@host/db python -m pytest   # same tests on PostgreSQL
+```
 
-All in `backend/app/services/safety.py`, covered by `backend/tests/test_safety.py` (18 tests):
+The tests cover:
+- The safety rules: the two-adult rule, release before boarding, PIN handover, lockouts, the safe hub, privacy of live video, route and speed alerts, SOS.
+- SMS codes and rate limits.
+- Request formats for Termii, Africa's Talking and Paystack, using mocked HTTP.
+- Paystack webhook signature checks and underpayment handling.
+- PIN encryption.
+- CSV import, crew vetting expiry, route validation and trip generation.
+- USSD and the location watchdog.
+- The production settings guard.
 
-- A trip starts only with **two different, vetted crew members** (driver + escort). No other adult can be attached to a trip.
-- The school can release a child **only onto a trip booked for that child today**; crew can board a child **only after the school has released them**.
-- Boarding creates a **one-time 4-digit PIN** sent by SMS to the parent and approved adults.
-- Handover needs an **approved adult + the correct PIN**. Three wrong PINs lock the handover and alert ops. Choosing an adult who is not on the family's list raises a critical alert.
-- **No approved adult at home** → the child stays with the escort and goes to the school's safe hub; the parent is notified.
-- A trip **cannot end while any child is still on board**.
-- **Live video** is available only to a parent whose own child is on that vehicle, only during the trip, and **every view is logged**. Parents never see other families' children.
-- Location pings raise **route-deviation** (> 1.5 km off route) and **speeding** (> 80 km/h) alerts, without repeating an open alert.
-- **SOS** from crew or parent is critical and is sent to the ops phone numbers at once.
+## Still to do before scale (after the pilot)
 
-## Stand-ins to replace before the pilot
-
-The code runs end to end without any accounts. These parts use stand-ins in `backend/app/services/providers.py`; switch them with an environment variable once implemented:
-
-| Service | Now | Replace with | Setting |
-| --- | --- | --- | --- |
-| SMS | Printed to the server log and saved in the `notifications` table | Termii or Africa's Talking | `WARDRIDE_SMS_PROVIDER` |
-| Payments | Every payment succeeds | Paystack or Flutterwave | `WARDRIDE_PAYMENT_PROVIDER` |
-| Live video | Placeholder stream URL | Your mobile DVR vendor's signed stream (HLS/WebRTC) and a video player in the app | `WARDRIDE_VIDEO_PROVIDER` |
-| Card scanning | Typed card ID | NFC reader (e.g. `react-native-nfc-manager`) or QR scan (`expo-camera`) | — |
-| Map | Coordinates as text | `react-native-maps` / Google Maps | — |
-
-## Before production
-
-- [ ] Set a long random `WARDRIDE_JWT_SECRET` and restrict CORS in `app/main.py`
-- [ ] Move to PostgreSQL (`docker compose up -d`, then set `WARDRIDE_DATABASE_URL`) and add Alembic migrations
-- [ ] Add SMS one-time-code login and password reset
-- [ ] Encrypt the handover PIN at rest and set data retention periods (NDPA)
-- [ ] Add push notifications (Expo Notifications) and USSD status checks
-- [ ] Offline queue in the crew app for boarding and handovers when data drops
-- [ ] Admin screens for vehicles, crew vetting records, trips and route planning (currently seeded)
-- [ ] Penetration test and NDPA data protection impact assessment
-- [ ] Build store apps with EAS (`npx eas-cli@latest build`)
+- [ ] **Live video player**: choose a mobile DVR vendor and implement `MockVideo.live_stream()` with their signed stream URLs, plus a player in the parent app
+- [ ] **Offline queue** in the crew app for boarding when data drops (location pings already fail safely)
+- [ ] **Push notifications** (Expo Notifications) alongside SMS, to cut SMS costs
+- [ ] **Shared rate limiting** (Redis) if you run more than one API instance
+- [ ] **Admin screen** for manual plans (the API endpoint already exists)
+- [ ] **Commercial map tiles** for production volume (OpenStreetMap's free tiles are for light use)
+- [ ] **Security checks**: penetration test and NDPA data protection impact assessment before scaling beyond the pilot

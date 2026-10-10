@@ -2,7 +2,8 @@ import os
 import tempfile
 
 _tmp = tempfile.mkdtemp()
-os.environ["WARDRIDE_DATABASE_URL"] = f"sqlite:///{_tmp}/test.db"
+# Set WARDRIDE_TEST_DATABASE_URL to run the suite against PostgreSQL instead of SQLite.
+os.environ["WARDRIDE_DATABASE_URL"] = os.environ.get("WARDRIDE_TEST_DATABASE_URL", f"sqlite:///{_tmp}/test.db")
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -14,6 +15,8 @@ from app.seed import DEMO_PASSWORD, seed  # noqa: E402
 
 @pytest.fixture()
 def data():
+    from app.services import ratelimit
+    ratelimit.reset()
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     with SessionLocal() as s:

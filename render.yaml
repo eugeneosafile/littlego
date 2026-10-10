@@ -1,0 +1,100 @@
+# Render Blueprint: New > Blueprint > pick this repo. Render creates the database, API, dashboard and jobs.
+# After the first deploy, fill in the secrets marked sync:false in the Render dashboard.
+databases:
+  - name: wardride-db
+    plan: basic-256mb
+    region: frankfurt          # closest Render region to Lagos
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: wardride-api
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    rootDir: backend
+    healthCheckPath: /health
+    envVars:
+      - key: WARDRIDE_ENVIRONMENT
+        value: production
+      - key: WARDRIDE_DATABASE_URL
+        fromDatabase: { name: wardride-db, property: connectionString }
+      - key: WARDRIDE_JWT_SECRET
+        generateValue: true
+      - key: WARDRIDE_PIN_ENCRYPTION_KEY
+        sync: false
+      - key: WARDRIDE_CORS_ORIGINS
+        sync: false
+      - key: WARDRIDE_OPS_ALERT_PHONES
+        sync: false
+      - key: WARDRIDE_SMS_PROVIDER
+        value: termii
+      - key: WARDRIDE_TERMII_API_KEY
+        sync: false
+      - key: WARDRIDE_TERMII_BASE_URL
+        sync: false
+      - key: WARDRIDE_SMS_SENDER_ID
+        sync: false
+      - key: WARDRIDE_PAYMENT_PROVIDER
+        value: paystack
+      - key: WARDRIDE_PAYSTACK_SECRET_KEY
+        sync: false
+      - key: WARDRIDE_PASSWORD_LOGIN_ENABLED
+        value: "true"
+
+  - type: web
+    name: wardride-dashboard
+    runtime: static
+    rootDir: web
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false            # e.g. https://wardride-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # Times are UTC. Lagos is UTC+1.
+  - type: cron
+    name: wardride-generate-trips
+    runtime: docker
+    region: frankfurt
+    rootDir: backend
+    schedule: "0 4 * * 1-5"    # 05:00 Lagos, school days
+    dockerCommand: python -m app.jobs generate-trips
+    envVars:
+      - fromGroup: wardride-shared
+
+  - type: cron
+    name: wardride-watchdog
+    runtime: docker
+    region: frankfurt
+    rootDir: backend
+    schedule: "*/5 5-17 * * 1-5"   # every 5 minutes, 06:00-18:59 Lagos
+    dockerCommand: python -m app.jobs watchdog
+    envVars:
+      - fromGroup: wardride-shared
+
+envVarGroups:
+  - name: wardride-shared
+    envVars:
+      - key: WARDRIDE_ENVIRONMENT
+        value: production
+      - key: WARDRIDE_DATABASE_URL
+        sync: false            # paste the same internal database URL as the API
+      - key: WARDRIDE_JWT_SECRET
+        sync: false            # same value as the API
+      - key: WARDRIDE_PIN_ENCRYPTION_KEY
+        sync: false            # same value as the API
+      - key: WARDRIDE_CORS_ORIGINS
+        sync: false
+      - key: WARDRIDE_SMS_PROVIDER
+        value: termii
+      - key: WARDRIDE_TERMII_API_KEY
+        sync: false
+      - key: WARDRIDE_PAYMENT_PROVIDER
+        value: paystack
+      - key: WARDRIDE_PAYSTACK_SECRET_KEY
+        sync: false

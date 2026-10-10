@@ -58,7 +58,7 @@ def test_full_journey(client, data, as_driver, as_school, as_parent):
 
     # Parent was told by SMS, including the PIN.
     with SessionLocal() as s:
-        sms = s.scalars(select(Notification).where(Notification.to_phone == "08030000100")).all()
+        sms = s.scalars(select(Notification).where(Notification.to_phone == "+2348030000100")).all()
     assert any(_pin(tcid) in n.message for n in sms)
 
     receiver = next(r for r in _receivers(client, as_driver, trip, tcid) if r["name"] == "Mama Bisi")
@@ -152,7 +152,7 @@ def test_no_approved_adult_sends_child_to_safe_hub(client, data, as_driver, as_s
     r = client.post(f"/crew/trips/{trip}/no-receiver", json={"trip_child_id": tcid}, headers=as_driver)
     assert r.json()["status"] == "at_safe_hub"
     with SessionLocal() as s:
-        msgs = s.scalars(select(Notification.message).where(Notification.to_phone == "08030000100")).all()
+        msgs = s.scalars(select(Notification.message).where(Notification.to_phone == "+2348030000100")).all()
     assert any("safe hub" in m for m in msgs)
 
 

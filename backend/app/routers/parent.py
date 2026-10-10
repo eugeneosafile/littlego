@@ -1,3 +1,6 @@
+import secrets
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -13,7 +16,8 @@ from ..schemas import (
 )
 from ..security import require
 from ..services import safety
-from ..services.providers import payments, video
+from ..services.payments import activate_booking
+from ..services.providers import ProviderError, payments, video
 from .common import get_trip, today
 
 router = APIRouter(prefix="/parent", tags=["parent"])
@@ -75,12 +79,32 @@ def book(body: BookingIn, db: Session = Depends(get_db), me: User = Parent):
                 monthly_price=price)
     db.add(b)
     db.flush()
-    checkout = payments().create_checkout(price, me.phone, f"WardRide {body.tier} plan for {child.name}")
-    b.payment_ref = checkout.reference
+    b.payment_ref = f"WR-{b.id}-{secrets.token_hex(4)}"
+    email = me.email or f"{me.phone.lstrip('+')}@{settings.payment_email_domain}"
+    try:
+        checkout = payments().create_checkout(price, email, b.payment_ref,
+                                              {"booking_id": b.id, "child": child.name, "tier": body.tier})
+    except ProviderError as exc:
+        db.rollback()
+        raise HTTPException(502, f"Payment provider unavailable: {exc}") from exc
     if checkout.paid:
-        b.status = "active"
+        b.status, b.paid_at = "active", datetime.now(UTC)
     db.commit()
     return CheckoutOut(booking=BookingOut.model_validate(b), checkout_url=checkout.checkout_url)
+
+
+@router.post("/bookings/{booking_id}/verify", response_model=BookingOut)
+def verify_booking(booking_id: int, db: Session = Depends(get_db), me: User = Parent):
+    """Called when the parent returns from checkout. The webhook usually gets there first."""
+    b = db.get(Booking, booking_id)
+    if b is None or b.child.parent_id != me.id:
+        raise HTTPException(404, "Booking not found")
+    if b.status != "active" and b.payment_ref:
+        paid, kobo = payments().verify(b.payment_ref)
+        if paid and (kobo == 0 or kobo >= b.monthly_price * 100):
+            activate_booking(db, b)
+            db.commit()
+    return b
 
 
 @router.get("/bookings", response_model=list[BookingOut])

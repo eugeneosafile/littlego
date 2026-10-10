@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 
 import {
   api, ApiError, del, naira, post, time,
   type Child, type ParentTrip, type Price, type Receiver, type Stream, type User,
 } from '../../api';
+import TripMap from '../../components/TripMap';
 import { Button, c, Card, ErrorText, H1, Muted, s, StatusPill } from '../../ui';
 
 type Tab = 'home' | 'live' | 'book' | 'handover';
@@ -121,6 +122,8 @@ function Live({ trips }: { trips: ParentTrip[] }) {
   const [error, setError] = useState('');
 
   if (!trip) return <><H1>Live</H1><Muted>No trips today.</Muted></>;
+  const mine = trip.my_children[0]?.child;
+  const home = mine?.home_lat != null && mine.home_lon != null ? { lat: mine.home_lat, lon: mine.home_lon } : null;
 
   async function openLive() {
     setError('');
@@ -160,10 +163,13 @@ function Live({ trips }: { trips: ParentTrip[] }) {
       <ErrorText>{error}</ErrorText>
       <Card>
         <Text style={{ fontWeight: '700', color: c.ink }}>Location</Text>
-        {trip.last_lat != null
-          ? <Muted>Last seen {time(trip.last_ping_at)} at {trip.last_lat.toFixed(4)}, {trip.last_lon?.toFixed(4)}</Muted>
-          : <Muted>Waiting for the first location update.</Muted>}
-        {/* Swap for react-native-maps or a Google Maps view in the next iteration. */}
+        <TripMap
+          vehicle={trip.last_lat != null && trip.last_lon != null ? { lat: trip.last_lat, lon: trip.last_lon } : null}
+          school={{ lat: trip.school_lat, lon: trip.school_lon }}
+          home={home}
+          label={trip.vehicle.code}
+        />
+        <Muted>{trip.last_ping_at ? `Updated ${time(trip.last_ping_at)}` : 'Waiting for the first location update.'}</Muted>
       </Card>
       <Card>
         <Text style={{ fontWeight: '700', color: c.ink }}>Trip log</Text>
@@ -202,15 +208,37 @@ function Book({ children }: { children: Child[] }) {
   useEffect(() => { api<Price[]>('/parent/prices').then(setPrices).catch(() => {}); }, []);
   useEffect(() => { if (childId === null && children[0]) setChildId(children[0].id); }, [children, childId]);
 
+  const [pending, setPending] = useState<number | null>(null);
+
   async function book() {
     if (childId === null) return;
     setBusy(true);
+    setMsg('');
     try {
-      const r = await post<{ booking: { status: string }; checkout_url: string }>('/parent/bookings', { child_id: childId, tier });
-      // With a real payment provider, open r.checkout_url in the browser here.
-      setMsg(r.booking.status === 'active' ? 'Plan active. The school will confirm the seat.' : 'Complete payment to activate.');
+      const r = await post<{ booking: { id: number; status: string }; checkout_url: string }>('/parent/bookings', { child_id: childId, tier });
+      if (r.booking.status === 'active') {
+        setMsg('Plan active. The school will confirm the seat.');
+      } else {
+        setPending(r.booking.id);
+        setMsg('Complete payment in the Paystack page that just opened (card, transfer or USSD), then come back here.');
+        await Linking.openURL(r.checkout_url);
+      }
     } catch (e) {
       setMsg(e instanceof ApiError ? e.message : 'Booking failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function checkPaid() {
+    if (pending === null) return;
+    setBusy(true);
+    try {
+      const b = await post<{ status: string }>(`/parent/bookings/${pending}/verify`);
+      if (b.status === 'active') { setPending(null); setMsg('Payment received. Your plan is active.'); }
+      else setMsg('We have not received the payment yet. It can take a minute after you pay.');
+    } catch (e) {
+      setMsg(e instanceof ApiError ? e.message : 'Could not check payment');
     } finally {
       setBusy(false);
     }
@@ -238,7 +266,8 @@ function Book({ children }: { children: Child[] }) {
       <Card style={{ backgroundColor: c.greenSoft, borderColor: c.greenSoft }}>
         <Text style={{ color: c.greenInk }}>Every plan: live and recorded CCTV, vetted driver and escort, PIN handover, SOS and a 24/7 ops centre.</Text>
       </Card>
-      <Button label={`Continue with ${TIER_TEXT[tier].name.toLowerCase()}`} onPress={book} busy={busy} />
+      <Button label={`Continue to pay for ${TIER_TEXT[tier].name.toLowerCase()}`} onPress={book} busy={busy} />
+      {pending !== null && <Button label="I have paid, check now" kind="outline" onPress={checkPaid} busy={busy} />}
       {msg ? <Text style={{ color: c.greenInk, fontWeight: '600' }}>{msg}</Text> : null}
     </>
   );

@@ -2,6 +2,7 @@
 so the rules live in one place and are covered by tests.
 """
 import secrets
+from zoneinfo import ZoneInfo
 from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
@@ -14,11 +15,25 @@ from ..models import (
     TripStatus, User, LocationPing,
 )
 from .geo import distance_to_route_km
+import logging
+
 from .providers import sms
+
+log = logging.getLogger("wardride.safety")
+
+
+LAGOS = ZoneInfo("Africa/Lagos")
 
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def _clock(dt: datetime) -> str:
+    """Time as parents read it: Lagos local time, e.g. 3:42pm."""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+    return dt.astimezone(LAGOS).strftime("%-I:%M%p").lower()
 
 
 def _fail(msg: str, code: int = status.HTTP_400_BAD_REQUEST):
@@ -26,9 +41,16 @@ def _fail(msg: str, code: int = status.HTTP_400_BAD_REQUEST):
 
 
 # ---------- events & notifications ----------
-def notify(db: Session, phone: str, message: str, channel: str = "sms") -> None:
-    ref = sms().send(phone, message)
+def notify(db: Session, phone: str, message: str, channel: str = "sms") -> bool:
+    """Send an SMS. A failed SMS never blocks a safety step; it is logged as FAILED for ops to follow up."""
+    try:
+        ref = sms().send(phone, message)
+        ok = True
+    except Exception as exc:  # provider down, bad number, no credit...
+        log.error("SMS to %s failed: %s", phone, exc)
+        ref, ok = "FAILED", False
     db.add(Notification(to_phone=phone, channel=channel, message=message, provider_ref=ref))
+    return ok
 
 
 def record(db: Session, kind: str, message: str, *, severity: Severity = Severity.info,
@@ -55,10 +77,12 @@ def assert_crew_valid(trip: Trip) -> None:
     if trip.driver_id == trip.escort_id:
         _fail("Driver and escort must be two different people")
     for person, needed in ((trip.driver, "driver"), (trip.escort, "escort")):
-        if person.role != Role.crew:
-            _fail(f"The {needed} must be WardRide crew")
+        if person.role != Role.crew or not person.active:
+            _fail(f"The {needed} must be active WardRide crew")
         if person.vetted_at is None:
             _fail(f"{person.name} has not completed vetting and cannot run a trip")
+        if person.vetting_expires_at is not None and person.vetting_expires_at < _now().date():
+            _fail(f"{person.name}'s vetting expired on {person.vetting_expires_at}. Renew before driving.")
 
 
 def assert_on_trip(trip: Trip, user: User) -> None:
@@ -139,7 +163,7 @@ def board(db: Session, trip: Trip, card_uid: str, crew: User) -> TripChild:
     child = tc.child
     record(db, "boarded", f"{child.name} boarded {trip.vehicle.code}", trip=trip, child_id=child.id, actor=crew)
     msg = (f"WardRide: {child.name} is on board {trip.vehicle.code} at "
-           f"{tc.boarded_at.strftime('%H:%M')}. Handover PIN: {tc.pin}. Share only with an approved adult.")
+           f"{_clock(tc.boarded_at)}. Handover PIN: {tc.pin}. Share only with an approved adult.")
     _notify_family(db, child, msg)
     for r in db.scalars(select(Receiver).where(Receiver.parent_id == child.parent_id, Receiver.active)):
         if r.phone != child.parent.phone:
@@ -180,7 +204,7 @@ def handover(db: Session, trip: Trip, trip_child_id: int, receiver_id: int, pin:
     record(db, "handed_over", f"{tc.child.name} handed to {receiver.name} ({receiver.relationship_to_child})",
            trip=trip, child_id=tc.child_id, actor=crew)
     _notify_family(db, tc.child, f"WardRide: {tc.child.name} was handed to {receiver.name} at "
-                   f"{tc.handed_over_at.strftime('%H:%M')}.")
+                   f"{_clock(tc.handed_over_at)}.")
     return tc
 
 
@@ -211,7 +235,8 @@ def sos(db: Session, trip: Trip, actor: User, note: str = "") -> Event:
 # ---------- tracking ----------
 def route_for(trip: Trip) -> list[tuple[float, float]]:
     pts = [(trip.school.lat, trip.school.lon)]
-    pts += [(tc.child.home_lat, tc.child.home_lon) for tc in trip.children]
+    pts += [(tc.child.home_lat, tc.child.home_lon) for tc in trip.children
+            if tc.child.home_lat is not None and tc.child.home_lon is not None]
     return pts
 
 
@@ -236,4 +261,19 @@ def location_ping(db: Session, trip: Trip, lat: float, lon: float, speed_kmh: fl
     if speed_kmh > settings.speed_limit_kmh and not _recent_open(db, trip, "speeding", 5):
         raised.append(record(db, "speeding", f"{trip.vehicle.code} at {speed_kmh:.0f} km/h",
                              severity=Severity.warning, trip=trip))
+    return raised
+
+
+def check_stale_locations(db: Session) -> list[Event]:
+    """Run every few minutes: alert when a running trip has not reported its location recently."""
+    cutoff = _now() - timedelta(minutes=settings.stale_location_minutes)
+    raised = []
+    for trip in db.scalars(select(Trip).where(Trip.status == TripStatus.in_progress)):
+        last = trip.last_ping_at or trip.started_at
+        if last is not None and last.tzinfo is None:
+            last = last.replace(tzinfo=UTC)
+        if last and last < cutoff and not _recent_open(db, trip, "location_stale", 30):
+            raised.append(record(db, "location_stale",
+                                 f"{trip.vehicle.code} has not reported its location for over "
+                                 f"{settings.stale_location_minutes} minutes", severity=Severity.warning, trip=trip))
     return raised

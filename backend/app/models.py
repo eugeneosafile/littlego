@@ -13,6 +13,7 @@ from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, Stri
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
+from .services.crypto import decrypt, encrypt
 
 
 def now() -> datetime:
@@ -70,10 +71,15 @@ class User(Base):
     phone: Mapped[str] = mapped_column(String(20), unique=True, index=True)
     role: Mapped[Role] = mapped_column(String(20))
     password_hash: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str | None] = mapped_column(String(200), nullable=True)
     school_id: Mapped[int | None] = mapped_column(ForeignKey("schools.id"), nullable=True)
-    # Crew only: when background checks and training were completed. Unvetted crew cannot run trips.
-    vetted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Crew only: background checks and training. Unvetted or expired crew cannot run trips.
     crew_role: Mapped[str | None] = mapped_column(String(20), nullable=True)  # driver | escort
+    vetted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    vetting_expires_at: Mapped[date | None] = mapped_column(Date, nullable=True)
+    vetting_notes: Mapped[str] = mapped_column(Text, default="")  # police check ref, guarantor, training
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
 class Child(Base):
@@ -85,8 +91,9 @@ class Child(Base):
     parent_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     card_uid: Mapped[str] = mapped_column(String(64), unique=True, index=True)  # NFC / QR id
     home_address: Mapped[str] = mapped_column(String(300), default="")
-    home_lat: Mapped[float] = mapped_column(Float)
-    home_lon: Mapped[float] = mapped_column(Float)
+    home_lat: Mapped[float | None] = mapped_column(Float, nullable=True)
+    home_lon: Mapped[float | None] = mapped_column(Float, nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     parent: Mapped[User] = relationship()
     school: Mapped[School] = relationship()
@@ -123,7 +130,8 @@ class Booking(Base):
     pickup_time: Mapped[str] = mapped_column(String(5), default="14:45")
     monthly_price: Mapped[int] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(20), default="pending_payment")  # pending_payment|active|cancelled
-    payment_ref: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    payment_ref: Mapped[str | None] = mapped_column(String(80), nullable=True, unique=True)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
     child: Mapped[Child] = relationship()
@@ -134,6 +142,7 @@ class Trip(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.id"))
     school_id: Mapped[int] = mapped_column(ForeignKey("schools.id"))
+    route_id: Mapped[int | None] = mapped_column(ForeignKey("routes.id"), nullable=True)
     driver_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     escort_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     run_date: Mapped[date] = mapped_column(Date)
@@ -164,8 +173,16 @@ class TripChild(Base):
     boarded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     handed_over_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     handed_over_to_id: Mapped[int | None] = mapped_column(ForeignKey("receivers.id"), nullable=True)
-    # One-time handover PIN. Cleared once the child is handed over.
-    pin: Mapped[str | None] = mapped_column(String(6), nullable=True)
+    # One-time handover PIN, encrypted at rest (see services/crypto.py). Cleared after handover.
+    pin_enc: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+    @property
+    def pin(self) -> str | None:
+        return decrypt(self.pin_enc)
+
+    @pin.setter
+    def pin(self, value: str | None) -> None:
+        self.pin_enc = encrypt(value) if value else None
     pin_attempts: Mapped[int] = mapped_column(Integer, default=0)
     pin_locked: Mapped[bool] = mapped_column(Boolean, default=False)
 
@@ -208,3 +225,46 @@ class LocationPing(Base):
     lon: Mapped[float] = mapped_column(Float)
     speed_kmh: Mapped[float] = mapped_column(Float, default=0)
     at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class OtpCode(Base):
+    """One-time sign-in codes sent by SMS. Only a hash of the code is stored."""
+    __tablename__ = "otp_codes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    phone: Mapped[str] = mapped_column(String(20), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    used: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+
+
+class Route(Base):
+    """A standing route: vehicle, crew and ordered stops. Daily trips are generated from routes."""
+    __tablename__ = "routes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    school_id: Mapped[int] = mapped_column(ForeignKey("schools.id"))
+    vehicle_id: Mapped[int] = mapped_column(ForeignKey("vehicles.id"))
+    driver_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    escort_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    run: Mapped[str] = mapped_column(String(20), default="afternoon")  # morning | afternoon
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    school: Mapped[School] = relationship()
+    vehicle: Mapped[Vehicle] = relationship()
+    driver: Mapped[User] = relationship(foreign_keys=[driver_id])
+    escort: Mapped[User] = relationship(foreign_keys=[escort_id])
+    stops: Mapped[list["RouteStop"]] = relationship(back_populates="route", order_by="RouteStop.stop_order",
+                                                    cascade="all, delete-orphan")
+
+
+class RouteStop(Base):
+    __tablename__ = "route_stops"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    route_id: Mapped[int] = mapped_column(ForeignKey("routes.id"), index=True)
+    child_id: Mapped[int] = mapped_column(ForeignKey("children.id"))
+    stop_order: Mapped[int] = mapped_column(Integer)
+
+    route: Mapped[Route] = relationship(back_populates="stops")
+    child: Mapped[Child] = relationship()

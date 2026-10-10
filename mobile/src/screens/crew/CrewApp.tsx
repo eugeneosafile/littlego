@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { api, ApiError, post, type CrewTrip, type Receiver, type TripChild, type User } from '../../api';
+import QrScanner from '../../components/QrScanner';
 import { Button, c, Card, ErrorText, H1, Muted, s, StatusPill } from '../../ui';
 
 const PING_EVERY_MS = 30_000;
@@ -13,6 +14,7 @@ export default function CrewApp({ user, onSignOut }: { user: User; onSignOut: ()
   const [open, setOpen] = useState<number | null>(null); // trip_child_id being handed over
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -76,12 +78,13 @@ export default function CrewApp({ user, onSignOut }: { user: User; onSignOut: ()
         {trip.status === 'in_progress' && (
           <Card dark>
             <Text style={{ color: '#fff', fontWeight: '700' }}>Board a child</Text>
-            <Muted light>Tap the child's card on the reader, or type the card ID.</Muted>
+            <Muted light>Scan the QR code on the child's card. Only children the school has released can board.</Muted>
+            <Button label="Scan card" onPress={() => setScanning(true)} busy={busy} />
             <TextInput style={[s.input, { backgroundColor: c.nightLine, color: '#fff', borderColor: c.nightLine }]}
-              value={card} onChangeText={setCard} placeholder="Card ID" placeholderTextColor={c.nightMuted}
+              value={card} onChangeText={setCard} placeholder="Or type the card ID" placeholderTextColor={c.nightMuted}
               autoCapitalize="characters" accessibilityLabel="Child card ID" />
-            <Button label="Board" disabled={!card} busy={busy}
-              onPress={() => run(async () => { await post(`/crew/trips/${trip.id}/board`, { card_uid: card }); setCard(''); })} />
+            <Button label="Board" kind="ghost" disabled={!card} busy={busy}
+              onPress={() => run(async () => { await post(`/crew/trips/${trip.id}/board`, { card_uid: card.trim().toUpperCase() }); setCard(''); })} />
           </Card>
         )}
         <ErrorText>{error}</ErrorText>
@@ -112,6 +115,11 @@ export default function CrewApp({ user, onSignOut }: { user: User; onSignOut: ()
           <Button label="End trip" kind="ghost" onPress={() => run(() => post(`/crew/trips/${trip.id}/end`))} />
         )}
       </ScrollView>
+      <QrScanner
+        visible={scanning}
+        onClose={() => setScanning(false)}
+        onScan={uid => { setScanning(false); run(() => post(`/crew/trips/${trip.id}/board`, { card_uid: uid })); }}
+      />
       <View style={{ padding: 16, paddingBottom: 24, borderTopWidth: 1, borderColor: c.nightLine }}>
         <Button label="SOS" kind="danger" onPress={sos} style={{ minHeight: 56 }} />
       </View>

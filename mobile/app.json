@@ -2,7 +2,7 @@
   "expo": {
     "name": "WardRide",
     "slug": "wardride",
-    "version": "1.0.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -10,8 +10,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.wardride.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "WardRide shares the vehicle's location with parents during school trips."
-      }
+        "NSLocationWhenInUseUsageDescription": "WardRide shares the vehicle's location with parents during school trips.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,11 +26,35 @@
       "package": "com.wardride.app",
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
-      ]
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "REPLACE_WITH_GOOGLE_MAPS_ANDROID_KEY"
+        }
+      },
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "scheme": "wardride",
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "WardRide uses the camera to scan children's QR cards when they board.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "WardRide shares the vehicle's location with parents during school trips."
+        }
+      ],
+      "expo-secure-store"
+    ]
   }
 }

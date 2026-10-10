@@ -33,6 +33,8 @@ class SchoolOut(ORM):
     id: int
     name: str
     address: str
+    lat: float
+    lon: float
     safe_hub_name: str
 
 
@@ -42,6 +44,8 @@ class ChildOut(ORM):
     class_name: str
     school_id: int
     home_address: str
+    home_lat: float | None = None
+    home_lon: float | None = None
 
 
 class ReceiverIn(BaseModel):

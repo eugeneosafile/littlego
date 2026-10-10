@@ -9,8 +9,9 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from .db import Base, SessionLocal, engine
-from .models import Child, Receiver, Role, School, Tier, Trip, TripChild, User, Vehicle
+from .models import Booking, Child, Receiver, Role, Route, RouteStop, School, Tier, Trip, TripChild, User, Vehicle
 from .security import hash_password
+from .services.phone import normalize
 
 DEMO_PASSWORD = "wardride123"
 
@@ -25,7 +26,7 @@ def seed(db: Session) -> dict:
     db.flush()
 
     def user(name, phone, role, **kw):
-        u = User(name=name, phone=phone, role=role, password_hash=pw, **kw)
+        u = User(name=name, phone=normalize(phone), role=role, password_hash=pw, **kw)
         db.add(u)
         return u
 
@@ -56,8 +57,8 @@ def seed(db: Session) -> dict:
 
     db.add_all([
         Receiver(parent_id=funmi.id, name="Funmi Adebayo", relationship_to_child="Mother", phone=funmi.phone),
-        Receiver(parent_id=funmi.id, name="Tunde Adebayo", relationship_to_child="Father", phone="08030000103"),
-        Receiver(parent_id=funmi.id, name="Mama Bisi", relationship_to_child="Nanny", phone="08030000104"),
+        Receiver(parent_id=funmi.id, name="Tunde Adebayo", relationship_to_child="Father", phone=normalize("08030000103")),
+        Receiver(parent_id=funmi.id, name="Mama Bisi", relationship_to_child="Nanny", phone=normalize("08030000104")),
         Receiver(parent_id=okeke.id, name="Chika Okeke", relationship_to_child="Mother", phone=okeke.phone),
         Receiver(parent_id=bello.id, name="Hauwa Bello", relationship_to_child="Mother", phone=bello.phone),
     ])
@@ -67,9 +68,27 @@ def seed(db: Session) -> dict:
     db.add_all([bus, van])
     db.flush()
 
+    for ch, tier in ((tolu, Tier.shared), (chidera, Tier.shared), (amina, Tier.shared), (kemi, Tier.group)):
+        db.add(Booking(child_id=ch.id, tier=tier, monthly_price=45_000 if tier == Tier.shared else 85_000,
+                       status="active", paid_at=vetted, payment_ref=f"SEED-{ch.id}"))
+
+    r1 = Route(name="Lekki Phase 1 bus", school_id=school.id, vehicle_id=bus.id, driver_id=musa.id,
+               escort_id=grace.id, run="afternoon")
+    r1.stops = [RouteStop(child_id=chidera.id, stop_order=1), RouteStop(child_id=tolu.id, stop_order=2),
+                RouteStop(child_id=amina.id, stop_order=3)]
+    r2 = Route(name="Nursery van", school_id=school.id, vehicle_id=van.id, driver_id=kunle.id,
+               escort_id=joy.id, run="afternoon")
+    r2.stops = [RouteStop(child_id=kemi.id, stop_order=1)]
+    db.add_all([r1, r2])
+    db.flush()
+
+    # Today's trips (normally created by `python -m app.jobs generate-trips`; created here so the demo
+    # works on any day of the week).
     today = datetime.now(UTC).date()
-    t1 = Trip(vehicle_id=bus.id, school_id=school.id, driver_id=musa.id, escort_id=grace.id, run_date=today)
-    t2 = Trip(vehicle_id=van.id, school_id=school.id, driver_id=kunle.id, escort_id=joy.id, run_date=today)
+    t1 = Trip(vehicle_id=bus.id, school_id=school.id, route_id=r1.id, driver_id=musa.id, escort_id=grace.id,
+              run_date=today)
+    t2 = Trip(vehicle_id=van.id, school_id=school.id, route_id=r2.id, driver_id=kunle.id, escort_id=joy.id,
+              run_date=today)
     db.add_all([t1, t2])
     db.flush()
     db.add_all([
@@ -80,10 +99,14 @@ def seed(db: Session) -> dict:
     ])
     db.commit()
     return {"school": school, "admin": admin, "ops": ops, "musa": musa, "grace": grace, "trainee": trainee,
-            "funmi": funmi, "okeke": okeke, "tolu": tolu, "kemi": kemi, "trip_bus": t1, "trip_van": t2}
+            "funmi": funmi, "okeke": okeke, "kunle": kunle, "joy": joy, "bus": bus, "van": van, "route_bus": r1,
+            "chidera": chidera, "amina": amina, "tolu": tolu, "kemi": kemi, "trip_bus": t1, "trip_van": t2}
 
 
 if __name__ == "__main__":
+    from .config import settings
+    if settings.is_production:
+        raise SystemExit("Refusing to load demo data in production. Use python -m app.bootstrap instead.")
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     with SessionLocal() as s:
