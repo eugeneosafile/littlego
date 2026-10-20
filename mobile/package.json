@@ -1,5 +1,5 @@
 {
-  "name": "wardride-mobile",
+  "name": "littlego-mobile",
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
@@ -8,6 +8,7 @@
     "expo-camera": "~57.0.6",
     "expo-location": "~57.0.20",
     "expo-secure-store": "~57.0.4",
+    "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",

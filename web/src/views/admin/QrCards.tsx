@@ -19,7 +19,7 @@ export default function QrCards({ school, children, onClose }: { school: School;
       <div className="qr-grid">
         {children.map(c => (
           <div key={c.id} className="qr-card">
-            <div className="qr-brand">WardRide</div>
+            <div className="qr-brand">LittleGo</div>
             {codes[c.id] ? <img src={codes[c.id]} alt={`QR code for ${c.name}`} width={120} height={120} /> : <div style={{ height: 120 }} />}
             <div className="qr-name">{c.name}</div>
             <div className="qr-meta">{c.class_name} · {school.name}</div>

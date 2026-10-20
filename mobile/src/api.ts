@@ -31,7 +31,7 @@ export interface Receiver { id: number; name: string; relationship_to_child: str
 export interface Price { tier: 'shared' | 'group' | 'exclusive'; monthly_price: number }
 export interface Stream { url: string; cameras: string[]; bitrate_kbps: number; expires_in_s: number; low_data: boolean }
 
-const TOKEN_KEY = 'wardride_token';
+const TOKEN_KEY = 'littlego_token';
 let token: string | null = null;
 
 // SecureStore keeps the token in the phone's keychain. On web we keep it in memory only.

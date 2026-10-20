@@ -40,7 +40,7 @@ export default function Login({ onIn }: { onIn: (u: User) => void }) {
   return (
     <main className="login">
       <form onSubmit={submit} className="card login-card">
-        <div className="brand"><Shield /> WardRide</div>
+        <div className="brand"><Shield /> LittleGo</div>
         <div className="segmented" role="tablist">
           <button type="button" role="tab" aria-selected={mode === 'password'} className={mode === 'password' ? 'on' : ''}
             onClick={() => { setMode('password'); setError('') }}>Password</button>
@@ -59,7 +59,7 @@ export default function Login({ onIn }: { onIn: (u: User) => void }) {
         <button className="btn primary" type="submit" disabled={busy}>
           {mode === 'password' ? 'Sign in' : codeSent ? 'Verify code' : 'Send me a code'}
         </button>
-        <p className="hint">Demo: school 08030000001, ops 08030000002, password wardride123</p>
+        <p className="hint">Demo: school 08030000001, ops 08030000002, password littlego123</p>
       </form>
     </main>
   )

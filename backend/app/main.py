@@ -19,7 +19,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="WardRide API",
+    title="LittleGo API",
     version="0.2.0",
     description="Child-only school transport: bookings, trips, verified release and handover, alerts.",
     lifespan=lifespan,

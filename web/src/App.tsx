@@ -19,7 +19,7 @@ export default function App() {
   return (
     <>
       <header className="topbar no-print">
-        <div className="brand"><Shield /> WardRide {user.role === 'ops' ? 'Ops Centre' : 'for Schools'}</div>
+        <div className="brand"><Shield /> LittleGo {user.role === 'ops' ? 'Ops Centre' : 'for Schools'}</div>
         <div className="row">
           <span className="muted-light">{user.name}</span>
           <button className="btn ghost" onClick={() => { setToken(null); setUser(null) }}>Sign out</button>

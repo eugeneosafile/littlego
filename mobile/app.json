@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "WardRide",
-    "slug": "wardride",
+    "name": "LittleGo",
+    "slug": "littlego",
     "version": "0.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.wardride.app",
+      "bundleIdentifier": "com.littlego.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "WardRide shares the vehicle's location with parents during school trips.",
+        "NSLocationWhenInUseUsageDescription": "LittleGo shares the vehicle's location with parents during school trips.",
         "ITSAppUsesNonExemptEncryption": false
       },
       "buildNumber": "2"
@@ -23,7 +23,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.wardride.app",
+      "package": "com.littlego.app",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
@@ -39,22 +39,31 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "wardride",
+    "scheme": "littlego",
     "plugins": [
       [
         "expo-camera",
         {
-          "cameraPermission": "WardRide uses the camera to scan children's QR cards when they board.",
+          "cameraPermission": "LittleGo uses the camera to scan children's QR cards when they board.",
           "recordAudioAndroid": false
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "WardRide shares the vehicle's location with parents during school trips."
+          "locationWhenInUsePermission": "LittleGo shares the vehicle's location with parents during school trips."
         }
       ],
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#0B6E4F",
+          "imageWidth": 220
+        }
+      ]
+    ],
+    "description": "LittleGo: safe, child-only rides home from school."
   }
 }

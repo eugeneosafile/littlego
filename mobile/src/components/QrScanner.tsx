@@ -17,7 +17,7 @@ export default function QrScanner({ visible, onScan, onClose }: {
         {!permission ? null : !permission.granted ? (
           <View style={styles.center}>
             <Text style={styles.title}>Camera needed to scan cards</Text>
-            <Muted light>WardRide uses the camera only to read children's QR cards.</Muted>
+            <Muted light>LittleGo uses the camera only to read children's QR cards.</Muted>
             <Button label="Allow camera" onPress={requestPermission} />
           </View>
         ) : (

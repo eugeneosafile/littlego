@@ -35,11 +35,11 @@ export default function FamiliesAdmin() {
 
   async function downloadTemplate() {
     const text = await fetch(`${API_URL}/admin/families/template.csv`, {
-      headers: { Authorization: `Bearer ${sessionStorage.getItem('wr_token')}` },
+      headers: { Authorization: `Bearer ${sessionStorage.getItem('lg_token')}` },
     }).then(r => r.text())
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' }))
-    a.download = 'wardride-families-template.csv'
+    a.download = 'littlego-families-template.csv'
     a.click()
   }
 

@@ -17,12 +17,12 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://wardride-api.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://littlego-api.onrender.com"
       }
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://wardride-api.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://littlego-api.onrender.com"
       }
     }
   },

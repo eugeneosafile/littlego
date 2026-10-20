@@ -1,4 +1,4 @@
-// Thin client for the WardRide API.
+// Thin client for the LittleGo API.
 export const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 export type Role = 'parent' | 'crew' | 'school_admin' | 'ops'
@@ -41,12 +41,12 @@ export interface RouteRow {
 export interface ImportReport { parents_created: number; children_created: number; receivers_added: number; rows_skipped: string[] }
 export interface GenerateReport { run_date: string; created: string[]; already_existed: string[]; skipped_children: string[]; warnings: string[] }
 
-let token: string | null = sessionStorage.getItem('wr_token')
+let token: string | null = sessionStorage.getItem('lg_token')
 
 export function setToken(t: string | null) {
   token = t
-  if (t) sessionStorage.setItem('wr_token', t)
-  else sessionStorage.removeItem('wr_token')
+  if (t) sessionStorage.setItem('lg_token', t)
+  else sessionStorage.removeItem('lg_token')
 }
 
 export class ApiError extends Error {

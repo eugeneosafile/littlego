@@ -64,8 +64,8 @@ def request_code(body: OtpRequestIn, request: Request, db: Session = Depends(get
         code = f"{secrets.randbelow(1_000_000):06d}"
         db.add(OtpCode(phone=phone, code_hash=hash_code(phone, code),
                        expires_at=datetime.now(UTC) + timedelta(minutes=settings.otp_ttl_minutes)))
-        notify(db, phone, f"Your WardRide code is {code}. It expires in {settings.otp_ttl_minutes} minutes. "
-                          "Never share it, even with WardRide staff.")
+        notify(db, phone, f"Your LittleGo code is {code}. It expires in {settings.otp_ttl_minutes} minutes. "
+                          "Never share it, even with LittleGo staff.")
         db.commit()
     return {"detail": "If this number is registered, a code has been sent."}
 

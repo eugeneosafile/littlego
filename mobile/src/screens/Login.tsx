@@ -33,7 +33,7 @@ export default function Login({ onIn }: { onIn: (u: User) => void }) {
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 16, backgroundColor: c.ground }}>
       <View style={{ gap: 4 }}>
-        <Text style={{ fontSize: 32, fontWeight: '800', color: c.green }}>WardRide</Text>
+        <Text style={{ fontSize: 32, fontWeight: '800', color: c.green }}>LittleGo</Text>
         <Muted>Safe, child-only rides home from school.</Muted>
       </View>
       <View style={{ gap: 6 }}>
@@ -84,7 +84,7 @@ export default function Login({ onIn }: { onIn: (u: User) => void }) {
           </Text>
         </Pressable>
       )}
-      <Muted>Demo: parent 08030000100, driver 08030000010 · password wardride123</Muted>
+      <Muted>Demo: parent 08030000100, driver 08030000010 · password littlego123</Muted>
     </KeyboardAvoidingView>
   );
 }

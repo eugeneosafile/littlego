@@ -1,7 +1,7 @@
 """Demo data: one school, families, crew, vehicles and today's afternoon trips.
 
 Run:  python -m app.seed        (resets the local database)
-All demo accounts use the password  wardride123
+All demo accounts use the password  littlego123
 All names and places are fictional.
 """
 from datetime import UTC, datetime
@@ -13,7 +13,7 @@ from .models import Booking, Child, Receiver, Role, Route, RouteStop, School, Ti
 from .security import hash_password
 from .services.phone import normalize
 
-DEMO_PASSWORD = "wardride123"
+DEMO_PASSWORD = "littlego123"
 
 
 def seed(db: Session) -> dict:
@@ -63,8 +63,8 @@ def seed(db: Session) -> dict:
         Receiver(parent_id=bello.id, name="Hauwa Bello", relationship_to_child="Mother", phone=bello.phone),
     ])
 
-    bus = Vehicle(code="WR-14", plate="LND-482-XA", kind=Tier.shared, seats=16, camera_count=3, cameras_online=3)
-    van = Vehicle(code="WR-22", plate="EKY-119-KJ", kind=Tier.group, seats=7, camera_count=2, cameras_online=2)
+    bus = Vehicle(code="LG-14", plate="LND-482-XA", kind=Tier.shared, seats=16, camera_count=3, cameras_online=3)
+    van = Vehicle(code="LG-22", plate="EKY-119-KJ", kind=Tier.group, seats=7, camera_count=2, cameras_online=2)
     db.add_all([bus, van])
     db.flush()
 

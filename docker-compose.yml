@@ -3,9 +3,9 @@ services:
   db:
     image: postgis/postgis:16-3.4
     environment:
-      POSTGRES_USER: wardride
-      POSTGRES_PASSWORD: wardride
-      POSTGRES_DB: wardride
+      POSTGRES_USER: littlego
+      POSTGRES_PASSWORD: littlego
+      POSTGRES_DB: littlego
     ports: ["5432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
 volumes:

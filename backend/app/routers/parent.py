@@ -79,7 +79,7 @@ def book(body: BookingIn, db: Session = Depends(get_db), me: User = Parent):
                 monthly_price=price)
     db.add(b)
     db.flush()
-    b.payment_ref = f"WR-{b.id}-{secrets.token_hex(4)}"
+    b.payment_ref = f"LG-{b.id}-{secrets.token_hex(4)}"
     email = me.email or f"{me.phone.lstrip('+')}@{settings.payment_email_domain}"
     try:
         checkout = payments().create_checkout(price, email, b.payment_ref,
@@ -155,7 +155,7 @@ def trip_detail(trip_id: int, db: Session = Depends(get_db), me: User = Parent):
 
 @router.get("/trips/{trip_id}/live", response_model=StreamOut)
 def live_video(trip_id: int, low_data: bool = True, db: Session = Depends(get_db), me: User = Parent):
-    """Live camera view. Allowed only while the parent's own child is in WardRide's care on
+    """Live camera view. Allowed only while the parent's own child is in LittleGo's care on
     this vehicle. Every access is logged (NDPA access log)."""
     trip = _my_trip(db, me, trip_id)
     in_care = any(tc.child.parent_id == me.id and tc.status in (ChildStatus.released, ChildStatus.on_board)

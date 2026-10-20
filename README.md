@@ -1,4 +1,4 @@
-# WardRide (v0.2, pilot-ready)
+# LittleGo (v0.3, pilot-ready)
 
 Child-only school transport: vetted driver and escort on every trip, verified release at the school gate, PIN-checked handover at home, live tracking and maps, camera access for parents, alerts and SOS.
 
@@ -29,6 +29,15 @@ Child-only school transport: vetted driver and escort on every trip, verified re
   - Deactivated accounts lose access immediately.
   - All times in Lagos time.
 
+## Before every pilot day and after every deploy
+
+```bash
+cd backend
+python -m app.readiness            # PASS/WARN/FAIL for settings, services, database and set-up data (also in Ops → Pilot readiness)
+python -m app.readiness --live --sms 0803xxxxxxx   # also checks the Paystack key and sends a real test SMS
+python -m app.dry_run              # plays a full pilot day on the real database and removes its test data
+```
+
 ## Run it locally
 
 ```bash
@@ -49,13 +58,13 @@ EXPO_PUBLIC_API_URL=http://<your-computer-LAN-IP>:8000 npx expo start
 
 In development, SMS messages (including sign-in codes and PINs) are printed in the API terminal instead of being sent.
 
-**Demo accounts** (password `wardride123`; or use an SMS code):
+**Demo accounts** (password `littlego123`; or use an SMS code):
 
 | Role | Phone | Use in |
 | --- | --- | --- |
 | School staff | 08030000001 | Web |
 | Ops | 08030000002 | Web |
-| Driver, WR-14 | 08030000010 | Mobile |
+| Driver, LG-14 | 08030000010 | Mobile |
 | Parent of Tolu and Kemi | 08030000100 | Mobile |
 
 Card IDs for typed boarding: `CARD-TOLU`, `CARD-KEMI`, `CARD-CHIDERA`, `CARD-AMINA`.
@@ -63,8 +72,8 @@ Card IDs for typed boarding: `CARD-TOLU`, `CARD-KEMI`, `CARD-CHIDERA`, `CARD-AMI
 ## Tests
 
 ```bash
-cd backend && python -m pytest                          # 45 tests, SQLite
-WARDRIDE_TEST_DATABASE_URL=postgresql+psycopg://user@host/db python -m pytest   # same tests on PostgreSQL
+cd backend && python -m pytest                          # 47 tests, SQLite
+LITTLEGO_TEST_DATABASE_URL=postgresql+psycopg://user@host/db python -m pytest   # same tests on PostgreSQL
 ```
 
 The tests cover:

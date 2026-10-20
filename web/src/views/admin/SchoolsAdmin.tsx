@@ -62,7 +62,7 @@ export default function SchoolsAdmin() {
             <label>Phone<input value={person.phone} onChange={e => setPerson({ ...person, phone: e.target.value })} required inputMode="tel" /></label>
             <label>Role
               <select value={person.role} onChange={e => setPerson({ ...person, role: e.target.value })}>
-                <option value="school_admin">School staff (release at gate)</option><option value="ops">WardRide ops</option>
+                <option value="school_admin">School staff (release at gate)</option><option value="ops">LittleGo ops</option>
               </select>
             </label>
             {person.role === 'school_admin' && <SchoolPicker schools={schools} value={person.school_id} onChange={id => setPerson({ ...person, school_id: id })} />}

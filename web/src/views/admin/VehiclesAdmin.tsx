@@ -28,7 +28,7 @@ export default function VehiclesAdmin() {
     <>
       <Card title="Add vehicle">
         <form className="form-row" onSubmit={add}>
-          <label>Fleet code<input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="WR-30" required /></label>
+          <label>Fleet code<input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="LG-30" required /></label>
           <label>Plate<input value={form.plate} onChange={e => setForm({ ...form, plate: e.target.value.toUpperCase() })} required /></label>
           <label>Type
             <select value={form.kind} onChange={e => setForm({ ...form, kind: e.target.value })}>

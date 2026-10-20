@@ -27,7 +27,7 @@ CSV_COLUMNS = ["parent_name", "parent_phone", "parent_email", "child_name", "cla
 
 
 def new_card_uid() -> str:
-    return f"WR{secrets.token_hex(4).upper()}"
+    return f"LG{secrets.token_hex(4).upper()}"
 
 
 # ---------------- schools and staff ----------------
@@ -445,3 +445,10 @@ class GenerateIn(BaseModel):
 def generate(body: GenerateIn, db: Session = Depends(get_db), _: User = Ops):
     """Creates the day's trips from active routes. Safe to run more than once."""
     return generate_trips(db, body.run_date or today())
+
+
+@router.get("/readiness")
+def readiness(_: User = Ops, db: Session = Depends(get_db)):
+    """Pilot readiness checklist for the ops dashboard."""
+    from ..services.readiness import run_checks, summary
+    return summary(run_checks(db))

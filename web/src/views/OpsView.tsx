@@ -5,12 +5,13 @@ import { Alerts, Card, Fleet, Tile } from '../components/Shared'
 import { usePoll } from '../usePoll'
 import CrewAdmin from './admin/CrewAdmin'
 import FamiliesAdmin from './admin/FamiliesAdmin'
+import ReadinessAdmin from './admin/ReadinessAdmin'
 import RoutesAdmin from './admin/RoutesAdmin'
 import SchoolsAdmin from './admin/SchoolsAdmin'
 import TripsAdmin from './admin/TripsAdmin'
 import VehiclesAdmin from './admin/VehiclesAdmin'
 
-const TABS = ['Live', 'Trips', 'Routes', 'Families', 'Crew', 'Vehicles', 'Schools & staff'] as const
+const TABS = ['Live', 'Trips', 'Routes', 'Families', 'Crew', 'Vehicles', 'Schools & staff', 'Pilot readiness'] as const
 type Tab = (typeof TABS)[number]
 
 export default function OpsView() {
@@ -29,6 +30,7 @@ export default function OpsView() {
       {tab === 'Crew' && <CrewAdmin />}
       {tab === 'Vehicles' && <VehiclesAdmin />}
       {tab === 'Schools & staff' && <SchoolsAdmin />}
+      {tab === 'Pilot readiness' && <ReadinessAdmin />}
     </>
   )
 }

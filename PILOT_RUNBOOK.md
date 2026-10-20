@@ -1,4 +1,4 @@
-# WardRide pilot runbook
+# LittleGo pilot runbook
 
 How the ops team runs the service day to day.
 

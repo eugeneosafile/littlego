@@ -43,7 +43,7 @@ export default function SchoolView() {
         <div className="tiles">
           <Tile label="Booked today" value={summary.booked_today} />
           <Tile label="Waiting at school" value={summary.waiting} />
-          <Tile label="With WardRide" value={summary.on_board + summary.released} accent />
+          <Tile label="With LittleGo" value={summary.on_board + summary.released} accent />
           <Tile label="Handed over" value={summary.handed_over} />
           <Tile label="Open alerts" value={summary.open_alerts} warn={summary.open_alerts > 0} />
         </div>

@@ -13,4 +13,4 @@ def activate_booking(db: Session, b: Booking) -> None:
     safety.record(db, "payment_received", f"Payment received for {b.child.name}'s {b.tier} plan "
                   f"(ref {b.payment_ref})", child_id=b.child_id)
     safety.notify(db, b.child.parent.phone,
-                  f"WardRide: payment received. {b.child.name}'s {b.tier} plan is now active.")
+                  f"LittleGo: payment received. {b.child.name}'s {b.tier} plan is now active.")

@@ -70,7 +70,7 @@ def test_expired_code_rejected(client, data):
 def test_password_login_rate_limited(client, data):
     for _ in range(settings.login_max_attempts_per_15min):
         client.post("/auth/login", json={"phone": "08030000001", "password": "wrong"})
-    assert client.post("/auth/login", json={"phone": "08030000001", "password": "wardride123"}).status_code == 429
+    assert client.post("/auth/login", json={"phone": "08030000001", "password": "littlego123"}).status_code == 429
 
 
 def test_deactivated_user_is_locked_out(client, data, as_parent):
@@ -95,7 +95,7 @@ def test_termii_request_shape(monkeypatch):
 
     ref = providers.TermiiSms(_client(handler)).send("+2348031234567", "hello")
     assert ref == "9122" and seen["url"].endswith("/api/sms/send")
-    assert seen["body"] == {"api_key": "TK", "to": "2348031234567", "from": "WardRide", "sms": "hello",
+    assert seen["body"] == {"api_key": "TK", "to": "2348031234567", "from": "LittleGo", "sms": "hello",
                             "type": "plain", "channel": "dnd"}
 
 
@@ -148,9 +148,9 @@ def test_paystack_initialize_and_verify(monkeypatch):
         return httpx.Response(200, json={"status": True, "data": {"status": "success", "amount": 4500000}})
 
     ps = providers.PaystackPayments(_client(handler))
-    co = ps.create_checkout(45_000, "a@b.ng", "WR-1-abc", {"booking_id": 1})
+    co = ps.create_checkout(45_000, "a@b.ng", "LG-1-abc", {"booking_id": 1})
     assert co.checkout_url.startswith("https://checkout.paystack.com") and not co.paid
-    assert ps.verify("WR-1-abc") == (True, 4500000)
+    assert ps.verify("LG-1-abc") == (True, 4500000)
 
 
 def _signed(body: dict, key: str = "sk_test_x"):
@@ -162,11 +162,11 @@ def test_paystack_webhook_activates_booking(client, data, as_parent, monkeypatch
     monkeypatch.setattr(settings, "payment_provider", "paystack")
     monkeypatch.setattr(settings, "paystack_secret_key", "sk_test_x")
     with SessionLocal() as s:
-        b = Booking(child_id=data["tolu"], tier="exclusive", monthly_price=240_000, payment_ref="WR-99-ab12")
+        b = Booking(child_id=data["tolu"], tier="exclusive", monthly_price=240_000, payment_ref="LG-99-ab12")
         s.add(b)
         s.commit()
         bid = b.id
-    event = {"event": "charge.success", "data": {"reference": "WR-99-ab12", "amount": 24_000_000, "status": "success"}}
+    event = {"event": "charge.success", "data": {"reference": "LG-99-ab12", "amount": 24_000_000, "status": "success"}}
     raw, sig = _signed(event)
     # forged signature refused
     assert client.post("/payments/paystack/webhook", content=raw, headers={"x-paystack-signature": "bad"}).status_code == 401
@@ -181,12 +181,12 @@ def test_paystack_underpayment_does_not_activate(client, data, monkeypatch):
     monkeypatch.setattr(settings, "payment_provider", "paystack")
     monkeypatch.setattr(settings, "paystack_secret_key", "sk_test_x")
     with SessionLocal() as s:
-        s.add(Booking(child_id=data["tolu"], tier="shared", monthly_price=45_000, payment_ref="WR-98-cd34"))
+        s.add(Booking(child_id=data["tolu"], tier="shared", monthly_price=45_000, payment_ref="LG-98-cd34"))
         s.commit()
-    raw, sig = _signed({"event": "charge.success", "data": {"reference": "WR-98-cd34", "amount": 100}})
+    raw, sig = _signed({"event": "charge.success", "data": {"reference": "LG-98-cd34", "amount": 100}})
     client.post("/payments/paystack/webhook", content=raw, headers={"x-paystack-signature": sig})
     with SessionLocal() as s:
-        assert s.scalar(select(Booking.status).where(Booking.payment_ref == "WR-98-cd34")) == "pending_payment"
+        assert s.scalar(select(Booking.status).where(Booking.payment_ref == "LG-98-cd34")) == "pending_payment"
 
 
 # ---------------- PIN encryption ----------------
@@ -220,7 +220,7 @@ def test_family_csv_import(client, data, as_ops):
                         files={"file": ("families.csv", CSV, "text/csv")}).json()
     assert again["children_created"] == 0 and again["parents_created"] == 0
     kids = [c for c in client.get("/admin/children", headers=as_ops).json() if c["name"].endswith("Eze")]
-    assert len(kids) == 2 and all(c["card_uid"].startswith("WR") for c in kids)
+    assert len(kids) == 2 and all(c["card_uid"].startswith("LG") for c in kids)
 
 
 def test_crew_vetting_requires_evidence_and_expiry_blocks_trips(client, data, as_ops, as_driver):
@@ -279,7 +279,7 @@ def test_ussd_status(client, data, as_driver, as_school):
     menu = client.post("/ussd", data={"phoneNumber": "+2348030000100", "text": "", "sessionId": "s"}).text
     assert menu.startswith("CON")
     status = client.post("/ussd", data={"phoneNumber": "+2348030000100", "text": "1", "sessionId": "s"}).text
-    assert status.startswith("END") and "Tolu: on board (WR-14) PIN" in status and "Kemi: in school" in status
+    assert status.startswith("END") and "Tolu: on board (LG-14) PIN" in status and "Kemi: in school" in status
     stranger = client.post("/ussd", data={"phoneNumber": "+2348099999999", "text": ""}).text
     assert "not registered" in stranger
 
@@ -300,3 +300,22 @@ def test_production_settings_refuse_unsafe_defaults():
     from app.config import Settings
     with pytest.raises(ValueError, match="JWT_SECRET"):
         Settings(environment="production")
+
+
+def test_readiness_report(client, data, as_ops, as_school):
+    r = client.get("/admin/readiness", headers=as_ops).json()
+    names = {c["name"]: c["status"] for c in r["checks"]}
+    assert r["ready"] is False                      # dev settings must never look pilot-ready
+    assert names["SMS provider"] == "fail" and names["Payments"] == "fail"
+    assert names["Vetted crew"] == "pass" and names["Approved adults"] == "pass"
+    assert client.get("/admin/readiness", headers=as_school).status_code == 403
+
+
+def test_dry_run_passes_and_cleans_up(data, monkeypatch):
+    import sys
+    from app import dry_run
+    monkeypatch.setattr(sys, "argv", ["dry_run"])
+    dry_run.results.clear()
+    assert dry_run.main() == 0
+    with SessionLocal() as s:
+        assert s.scalar(select(User).where(User.name.like("DRY RUN%"))) is None

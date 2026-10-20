@@ -16,7 +16,7 @@ import httpx
 from ..config import settings
 from .phone import for_provider
 
-log = logging.getLogger("wardride.providers")
+log = logging.getLogger("littlego.providers")
 TIMEOUT = httpx.Timeout(15.0)
 
 
@@ -44,7 +44,7 @@ class TermiiSms:
 
     def __init__(self, client: httpx.Client | None = None):
         if not settings.termii_api_key:
-            raise ProviderError("WARDRIDE_TERMII_API_KEY is not set")
+            raise ProviderError("LITTLEGO_TERMII_API_KEY is not set")
         self.client = client or httpx.Client(timeout=TIMEOUT)
 
     def send(self, phone: str, message: str) -> str:
@@ -68,7 +68,7 @@ class AfricasTalkingSms:
 
     def __init__(self, client: httpx.Client | None = None):
         if not settings.africastalking_api_key:
-            raise ProviderError("WARDRIDE_AFRICASTALKING_API_KEY is not set")
+            raise ProviderError("LITTLEGO_AFRICASTALKING_API_KEY is not set")
         self.client = client or httpx.Client(timeout=TIMEOUT)
 
     @property
@@ -129,7 +129,7 @@ class PaystackPayments:
 
     def __init__(self, client: httpx.Client | None = None):
         if not settings.paystack_secret_key:
-            raise ProviderError("WARDRIDE_PAYSTACK_SECRET_KEY is not set")
+            raise ProviderError("LITTLEGO_PAYSTACK_SECRET_KEY is not set")
         self.client = client or httpx.Client(timeout=TIMEOUT)
         self.headers = {"Authorization": f"Bearer {settings.paystack_secret_key}"}
 

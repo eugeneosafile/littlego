@@ -113,7 +113,7 @@ class Receiver(Base):
 class Vehicle(Base):
     __tablename__ = "vehicles"
     id: Mapped[int] = mapped_column(primary_key=True)
-    code: Mapped[str] = mapped_column(String(20), unique=True)  # e.g. WR-14
+    code: Mapped[str] = mapped_column(String(20), unique=True)  # e.g. LG-14
     plate: Mapped[str] = mapped_column(String(20))
     kind: Mapped[Tier] = mapped_column(String(20))
     seats: Mapped[int] = mapped_column(Integer)

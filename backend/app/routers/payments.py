@@ -12,7 +12,7 @@ from ..services.payments import activate_booking
 from ..services.providers import payments
 
 router = APIRouter(prefix="/payments", tags=["payments"])
-log = logging.getLogger("wardride.payments")
+log = logging.getLogger("littlego.payments")
 
 
 @router.post("/paystack/webhook")

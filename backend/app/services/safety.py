@@ -19,7 +19,7 @@ import logging
 
 from .providers import sms
 
-log = logging.getLogger("wardride.safety")
+log = logging.getLogger("littlego.safety")
 
 
 LAGOS = ZoneInfo("Africa/Lagos")
@@ -63,7 +63,7 @@ def record(db: Session, kind: str, message: str, *, severity: Severity = Severit
     db.add(ev)
     if severity == Severity.critical:
         for phone in [p.strip() for p in settings.ops_alert_phones.split(",") if p.strip()]:
-            notify(db, phone, f"[WardRide CRITICAL] {message}")
+            notify(db, phone, f"[LittleGo CRITICAL] {message}")
     return ev
 
 
@@ -78,7 +78,7 @@ def assert_crew_valid(trip: Trip) -> None:
         _fail("Driver and escort must be two different people")
     for person, needed in ((trip.driver, "driver"), (trip.escort, "escort")):
         if person.role != Role.crew or not person.active:
-            _fail(f"The {needed} must be active WardRide crew")
+            _fail(f"The {needed} must be active LittleGo crew")
         if person.vetted_at is None:
             _fail(f"{person.name} has not completed vetting and cannot run a trip")
         if person.vetting_expires_at is not None and person.vetting_expires_at < _now().date():
@@ -140,7 +140,7 @@ def release_at_school(db: Session, card_uid: str, staff: User) -> TripChild:
         )
     )
     if tc is None:
-        _fail(f"{child.name} has no WardRide trip waiting today. Do not release.")
+        _fail(f"{child.name} has no LittleGo trip waiting today. Do not release.")
     tc.status = ChildStatus.released
     tc.released_at = _now()
     tc.released_by_id = staff.id
@@ -162,12 +162,12 @@ def board(db: Session, trip: Trip, card_uid: str, crew: User) -> TripChild:
     tc.pin_attempts = 0
     child = tc.child
     record(db, "boarded", f"{child.name} boarded {trip.vehicle.code}", trip=trip, child_id=child.id, actor=crew)
-    msg = (f"WardRide: {child.name} is on board {trip.vehicle.code} at "
+    msg = (f"LittleGo: {child.name} is on board {trip.vehicle.code} at "
            f"{_clock(tc.boarded_at)}. Handover PIN: {tc.pin}. Share only with an approved adult.")
     _notify_family(db, child, msg)
     for r in db.scalars(select(Receiver).where(Receiver.parent_id == child.parent_id, Receiver.active)):
         if r.phone != child.parent.phone:
-            notify(db, r.phone, f"WardRide: {child.name} is on the way home. PIN: {tc.pin}.")
+            notify(db, r.phone, f"LittleGo: {child.name} is on the way home. PIN: {tc.pin}.")
     return tc
 
 
@@ -203,7 +203,7 @@ def handover(db: Session, trip: Trip, trip_child_id: int, receiver_id: int, pin:
     tc.pin = None
     record(db, "handed_over", f"{tc.child.name} handed to {receiver.name} ({receiver.relationship_to_child})",
            trip=trip, child_id=tc.child_id, actor=crew)
-    _notify_family(db, tc.child, f"WardRide: {tc.child.name} was handed to {receiver.name} at "
+    _notify_family(db, tc.child, f"LittleGo: {tc.child.name} was handed to {receiver.name} at "
                    f"{_clock(tc.handed_over_at)}.")
     return tc
 
@@ -218,7 +218,7 @@ def no_receiver(db: Session, trip: Trip, trip_child_id: int, crew: User) -> Trip
     hub = trip.school.safe_hub_name
     record(db, "no_receiver", f"No approved adult for {tc.child.name}; taken to {hub}",
            severity=Severity.warning, trip=trip, child_id=tc.child_id, actor=crew)
-    _notify_family(db, tc.child, f"WardRide: no approved adult was at home for {tc.child.name}. "
+    _notify_family(db, tc.child, f"LittleGo: no approved adult was at home for {tc.child.name}. "
                    f"{tc.child.name} is safe with our escort and going to {hub}. Please call us.")
     return tc
 
