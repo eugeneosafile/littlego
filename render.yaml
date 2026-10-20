@@ -28,7 +28,7 @@ services:
       - key: LITTLEGO_PIN_ENCRYPTION_KEY
         sync: false                # see DEPLOY.md: one command generates it; keep a copy safe
       - key: LITTLEGO_CORS_ORIGINS
-        fromService: { type: web, name: littlego-dashboard, property: host }
+        sync: false                # the dashboard's public address, e.g. https://littlego-dashboard.onrender.com
       - key: LITTLEGO_OPS_ALERT_PHONES
         sync: false                # e.g. 08031234567,08037654321
       - key: LITTLEGO_SMS_PROVIDER
@@ -54,7 +54,7 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        fromService: { type: web, name: littlego-api, property: host }
+        sync: false                # the API's public address, e.g. https://littlego-api.onrender.com
     routes:
       - type: rewrite
         source: /*
@@ -78,7 +78,7 @@ services:
       - key: LITTLEGO_PIN_ENCRYPTION_KEY
         fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_PIN_ENCRYPTION_KEY }
       - key: LITTLEGO_CORS_ORIGINS
-        fromService: { type: web, name: littlego-dashboard, property: host }
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_CORS_ORIGINS }
       - key: LITTLEGO_OPS_ALERT_PHONES
         fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_OPS_ALERT_PHONES }
       - key: LITTLEGO_SMS_PROVIDER
@@ -114,7 +114,7 @@ services:
       - key: LITTLEGO_PIN_ENCRYPTION_KEY
         fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_PIN_ENCRYPTION_KEY }
       - key: LITTLEGO_CORS_ORIGINS
-        fromService: { type: web, name: littlego-dashboard, property: host }
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_CORS_ORIGINS }
       - key: LITTLEGO_OPS_ALERT_PHONES
         fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_OPS_ALERT_PHONES }
       - key: LITTLEGO_SMS_PROVIDER

@@ -28,7 +28,8 @@ git push -u origin main
    - `littlego-api`: the API (runs database migrations on every start)
    - `littlego-dashboard`: the school and ops dashboard
    - `littlego-generate-trips` and `littlego-watchdog`: the scheduled jobs
-2. The services are linked automatically (database address, sign-in secret, dashboard and API addresses, Paystack return page). Render asks only for:
+2. The database address, sign-in secret and Paystack return page are linked automatically. Render asks for:
+   - `LITTLEGO_CORS_ORIGINS` (API) and `VITE_API_URL` (dashboard): the dashboard's and the API's **public** addresses, copied from the top of each service page. If you don't know them yet, enter a placeholder, deploy, then set the real values and redeploy.
    - `LITTLEGO_PIN_ENCRYPTION_KEY`: on a Mac, run `python3 -c "import base64,os;print(base64.urlsafe_b64encode(os.urandom(32)).decode())"`. Keep a copy in a password manager; losing it makes in-flight handover PINs unreadable.
    - `LITTLEGO_OPS_ALERT_PHONES`: phones that must receive every SOS, comma separated
    - `LITTLEGO_TERMII_API_KEY`: a newly generated Termii key
