@@ -29,7 +29,8 @@ class Settings(BaseSettings):
     sms_provider: str = "console"      # console | termii | africastalking
     sms_sender_id: str = "LittleGo"    # must be registered with the provider
     termii_api_key: str = ""
-    termii_base_url: str = "https://api.ng.termii.com"  # use the base URL shown on your Termii dashboard
+    termii_base_url: str = "https://v4.api.termii.com"  # base URL shown under Settings > API Keys in Termii
+    termii_send_path: str = "/api/sms/send"  # confirm against Termii's API docs for your account
     termii_channel: str = "dnd"        # "dnd" for transactional/OTP (enable via Termii support), else "generic"
     africastalking_username: str = "sandbox"
     africastalking_api_key: str = ""

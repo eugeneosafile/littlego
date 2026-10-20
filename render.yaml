@@ -32,7 +32,7 @@ services:
       - key: LITTLEGO_TERMII_API_KEY
         sync: false
       - key: LITTLEGO_TERMII_BASE_URL
-        sync: false
+        value: https://v4.api.termii.com
       - key: LITTLEGO_SMS_SENDER_ID
         sync: false
       - key: LITTLEGO_PAYMENT_PROVIDER

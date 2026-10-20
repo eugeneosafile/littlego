@@ -48,7 +48,7 @@ class TermiiSms:
         self.client = client or httpx.Client(timeout=TIMEOUT)
 
     def send(self, phone: str, message: str) -> str:
-        r = self.client.post(f"{settings.termii_base_url.rstrip('/')}/api/sms/send", json={
+        r = self.client.post(f"{settings.termii_base_url.rstrip('/')}/{settings.termii_send_path.lstrip('/')}", json={
             "api_key": settings.termii_api_key,
             "to": for_provider(phone),
             "from": settings.sms_sender_id,
