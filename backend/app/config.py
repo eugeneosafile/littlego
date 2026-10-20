@@ -3,6 +3,8 @@
 Every setting can be overridden with an environment variable named LITTLEGO_<SETTING>,
 for example LITTLEGO_DATABASE_URL or LITTLEGO_SMS_PROVIDER.
 """
+import os
+
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -60,6 +62,24 @@ class Settings(BaseSettings):
     price_shared: int = 45_000
     price_group: int = 85_000
     price_exclusive: int = 240_000
+
+    @model_validator(mode="after")
+    def _normalise(self):
+        # Render and Heroku give "postgres://" or "postgresql://"; this app uses the psycopg 3 driver.
+        for prefix in ("postgres://", "postgresql://"):
+            if self.database_url.startswith(prefix):
+                self.database_url = "postgresql+psycopg://" + self.database_url[len(prefix):]
+        # On Render, the service's own public address is provided automatically.
+        render_url = os.environ.get("RENDER_EXTERNAL_URL")
+        if render_url and self.public_api_url == "http://localhost:8000":
+            self.public_api_url = render_url
+        if not self.paystack_callback_url and not self.public_api_url.startswith("http://localhost"):
+            self.paystack_callback_url = self.public_api_url.rstrip("/") + "/payments/return"
+        # Allowed origins may be given as bare host names (e.g. from Render): add https://
+        self.cors_origins = ",".join(
+            o if o == "*" or "://" in o else f"https://{o}"
+            for o in (x.strip() for x in self.cors_origins.split(",")) if o)
+        return self
 
     @property
     def is_production(self) -> bool:

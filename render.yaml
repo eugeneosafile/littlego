@@ -1,9 +1,13 @@
-# Render Blueprint: New > Blueprint > pick this repo. Render creates the database, API, dashboard and jobs.
-# After the first deploy, fill in the secrets marked sync:false in the Render dashboard.
+# Render Blueprint for LittleGo.
+# Render dashboard > New > Blueprint > choose the littlego repository.
+# Render creates the database, API, dashboard and two scheduled jobs, and links them together.
+# It asks only for the values marked `sync: false` (secrets and phone numbers).
+# Times are UTC; Lagos is UTC+1.
+
 databases:
   - name: littlego-db
     plan: basic-256mb
-    region: frankfurt          # closest Render region to Lagos
+    region: frankfurt              # closest Render region to Lagos
     postgresMajorVersion: "16"
 
 services:
@@ -22,29 +26,25 @@ services:
       - key: LITTLEGO_JWT_SECRET
         generateValue: true
       - key: LITTLEGO_PIN_ENCRYPTION_KEY
-        sync: false
+        sync: false                # see DEPLOY.md: one command generates it; keep a copy safe
       - key: LITTLEGO_CORS_ORIGINS
-        sync: false
+        fromService: { type: web, name: littlego-dashboard, property: host }
       - key: LITTLEGO_OPS_ALERT_PHONES
-        sync: false
+        sync: false                # e.g. 08031234567,08037654321
       - key: LITTLEGO_SMS_PROVIDER
         value: termii
-      - key: LITTLEGO_TERMII_API_KEY
-        sync: false
       - key: LITTLEGO_TERMII_BASE_URL
         value: https://v4.api.termii.com
-      - key: LITTLEGO_SMS_SENDER_ID
+      - key: LITTLEGO_TERMII_API_KEY
         sync: false
+      - key: LITTLEGO_TERMII_CHANNEL
+        value: dnd                 # change to generic only until Termii enables DND
+      - key: LITTLEGO_SMS_SENDER_ID
+        value: LittleGo
       - key: LITTLEGO_PAYMENT_PROVIDER
         value: paystack
       - key: LITTLEGO_PAYSTACK_SECRET_KEY
-        sync: false
-      - key: LITTLEGO_PAYSTACK_CALLBACK_URL
-        sync: false            # https://<this service's URL>/payments/return
-      - key: LITTLEGO_PUBLIC_API_URL
-        sync: false            # https://<this service's URL>
-      - key: LITTLEGO_PASSWORD_LOGIN_ENABLED
-        value: "true"
+        sync: false                # sk_test_... first
 
   - type: web
     name: littlego-dashboard
@@ -54,51 +54,81 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        sync: false            # e.g. https://littlego-api.onrender.com
+        fromService: { type: web, name: littlego-api, property: host }
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
 
-  # Times are UTC. Lagos is UTC+1.
   - type: cron
     name: littlego-generate-trips
     runtime: docker
     region: frankfurt
+    plan: starter
     rootDir: backend
-    schedule: "0 4 * * 1-5"    # 05:00 Lagos, school days
+    schedule: "0 4 * * 1-5"        # 05:00 Lagos, school days
     dockerCommand: python -m app.jobs generate-trips
     envVars:
-      - fromGroup: littlego-shared
+      - key: LITTLEGO_ENVIRONMENT
+        value: production
+      - key: LITTLEGO_DATABASE_URL
+        fromDatabase: { name: littlego-db, property: connectionString }
+      - key: LITTLEGO_JWT_SECRET
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_JWT_SECRET }
+      - key: LITTLEGO_PIN_ENCRYPTION_KEY
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_PIN_ENCRYPTION_KEY }
+      - key: LITTLEGO_CORS_ORIGINS
+        fromService: { type: web, name: littlego-dashboard, property: host }
+      - key: LITTLEGO_OPS_ALERT_PHONES
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_OPS_ALERT_PHONES }
+      - key: LITTLEGO_SMS_PROVIDER
+        value: termii
+      - key: LITTLEGO_TERMII_BASE_URL
+        value: https://v4.api.termii.com
+      - key: LITTLEGO_TERMII_API_KEY
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_TERMII_API_KEY }
+      - key: LITTLEGO_TERMII_CHANNEL
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_TERMII_CHANNEL }
+      - key: LITTLEGO_SMS_SENDER_ID
+        value: LittleGo
+      - key: LITTLEGO_PAYMENT_PROVIDER
+        value: paystack
+      - key: LITTLEGO_PAYSTACK_SECRET_KEY
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_PAYSTACK_SECRET_KEY }
 
   - type: cron
     name: littlego-watchdog
     runtime: docker
     region: frankfurt
+    plan: starter
     rootDir: backend
     schedule: "*/5 5-17 * * 1-5"   # every 5 minutes, 06:00-18:59 Lagos
     dockerCommand: python -m app.jobs watchdog
     envVars:
-      - fromGroup: littlego-shared
-
-envVarGroups:
-  - name: littlego-shared
-    envVars:
       - key: LITTLEGO_ENVIRONMENT
         value: production
       - key: LITTLEGO_DATABASE_URL
-        sync: false            # paste the same internal database URL as the API
+        fromDatabase: { name: littlego-db, property: connectionString }
       - key: LITTLEGO_JWT_SECRET
-        sync: false            # same value as the API
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_JWT_SECRET }
       - key: LITTLEGO_PIN_ENCRYPTION_KEY
-        sync: false            # same value as the API
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_PIN_ENCRYPTION_KEY }
       - key: LITTLEGO_CORS_ORIGINS
-        sync: false
+        fromService: { type: web, name: littlego-dashboard, property: host }
+      - key: LITTLEGO_OPS_ALERT_PHONES
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_OPS_ALERT_PHONES }
       - key: LITTLEGO_SMS_PROVIDER
         value: termii
+      - key: LITTLEGO_TERMII_BASE_URL
+        value: https://v4.api.termii.com
       - key: LITTLEGO_TERMII_API_KEY
-        sync: false
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_TERMII_API_KEY }
+      - key: LITTLEGO_TERMII_CHANNEL
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_TERMII_CHANNEL }
+      - key: LITTLEGO_SMS_SENDER_ID
+        value: LittleGo
       - key: LITTLEGO_PAYMENT_PROVIDER
         value: paystack
       - key: LITTLEGO_PAYSTACK_SECRET_KEY
-        sync: false
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_PAYSTACK_SECRET_KEY }
+

@@ -1,5 +1,7 @@
 // Thin client for the LittleGo API.
-export const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+const rawApi: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+// Render can supply a bare host name (littlego-api.onrender.com); add https:// when missing.
+export const API_URL: string = rawApi.includes('://') ? rawApi.replace(/\/$/, '') : `https://${rawApi}`
 
 export type Role = 'parent' | 'crew' | 'school_admin' | 'ops'
 export type ChildStatus = 'scheduled' | 'released' | 'on_board' | 'handed_over' | 'at_safe_hub' | 'absent'

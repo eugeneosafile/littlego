@@ -23,21 +23,17 @@ git push -u origin main
 
 ## 3. Deploy on Render (Blueprint)
 
-1. Render dashboard → **New → Blueprint** → choose the repo. It reads `render.yaml` and creates:
+1. Render dashboard → **New → Blueprint** → connect GitHub → choose `littlego`. Render reads `render.yaml` and creates:
    - `littlego-db`: PostgreSQL 16
-   - `littlego-api`: the API (Docker; runs database migrations on every start)
-   - `littlego-dashboard`: the school and ops web dashboard
-   - two scheduled jobs: create each day's trips at 05:00, and check for vehicles that stop reporting their location every 5 minutes
-2. Fill in the secrets Render asks for:
-   - `LITTLEGO_PIN_ENCRYPTION_KEY`: run `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` and **store the value safely**. Losing it makes in-flight handover PINs unreadable.
-   - `LITTLEGO_CORS_ORIGINS`: the dashboard URL, e.g. `https://littlego-dashboard.onrender.com`
-   - `LITTLEGO_OPS_ALERT_PHONES`: the ops phones that get every SOS and critical alert by SMS
-   - Termii and Paystack keys
-   - For the dashboard: `VITE_API_URL` = the API URL
-   - For the `littlego-shared` group used by the jobs: the same database URL, JWT secret and PIN key as the API
-3. The API **refuses to start** if a production setting is unsafe (default secret, SQLite, `*` CORS, console SMS, mock payments). The deploy log lists exactly what is missing.
-
-Railway works too: create a PostgreSQL service and a service from `backend/` (it detects the Dockerfile), and copy the same variables.
+   - `littlego-api`: the API (runs database migrations on every start)
+   - `littlego-dashboard`: the school and ops dashboard
+   - `littlego-generate-trips` and `littlego-watchdog`: the scheduled jobs
+2. The services are linked automatically (database address, sign-in secret, dashboard and API addresses, Paystack return page). Render asks only for:
+   - `LITTLEGO_PIN_ENCRYPTION_KEY`: on a Mac, run `python3 -c "import base64,os;print(base64.urlsafe_b64encode(os.urandom(32)).decode())"`. Keep a copy in a password manager; losing it makes in-flight handover PINs unreadable.
+   - `LITTLEGO_OPS_ALERT_PHONES`: phones that must receive every SOS, comma separated
+   - `LITTLEGO_TERMII_API_KEY`: a newly generated Termii key
+   - `LITTLEGO_PAYSTACK_SECRET_KEY`: the `sk_test_...` key
+3. The API **refuses to start** if a production setting is unsafe, and the deploy log says exactly what is missing.
 
 ## 4. First login
 
