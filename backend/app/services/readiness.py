@@ -57,7 +57,10 @@ def _provider_checks(live: bool) -> list[Check]:
     c: list[Check] = []
     add = lambda *a: c.append(Check("Services", *a))  # noqa: E731
     sms = settings.sms_provider
-    if sms == "console":
+    if sms == "outbox":
+        add("SMS provider", FAIL, "TEST MODE: messages are shown in Ops > Messages, not sent",
+            "Fine for testing. Set LITTLEGO_SMS_PROVIDER=termii once the sender ID is approved, before any child rides.")
+    elif sms == "console":
         add("SMS provider", FAIL, "console (messages are only printed, not sent)",
             "Open a Termii or Africa's Talking account; set LITTLEGO_SMS_PROVIDER and the API key.")
     else:

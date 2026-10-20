@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     password_login_enabled: bool = True  # staff and demo accounts; parents and crew use SMS codes
 
     # ---- SMS ----
-    sms_provider: str = "console"      # console | termii | africastalking
+    sms_provider: str = "console"      # console | outbox (testing) | termii | africastalking
     sms_sender_id: str = "LittleGo"    # must be registered with the provider
     termii_api_key: str = ""
     termii_base_url: str = "https://v4.api.termii.com"  # base URL shown under Settings > API Keys in Termii

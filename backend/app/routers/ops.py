@@ -3,7 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import Event, Role, Trip, User
+from ..config import settings
+from ..models import Event, Notification, Role, Trip, User
 from ..schemas import EventOut, TripOut
 from ..security import require
 from .common import today
@@ -42,3 +43,13 @@ def resolve(event_id: int, db: Session = Depends(get_db), _: User = Ops):
     ev.resolved = True
     db.commit()
     return ev
+
+
+@router.get("/messages")
+def test_messages(db: Session = Depends(get_db), _: User = Ops):
+    """Only in test SMS mode: the latest messages that would have been sent, so testers can get
+    their sign-in codes and handover PINs. Unavailable once real SMS is switched on."""
+    if settings.sms_provider != "outbox":
+        raise HTTPException(404, "Messages are only shown in test SMS mode")
+    rows = db.scalars(select(Notification).order_by(Notification.id.desc()).limit(200)).all()
+    return [{"id": n.id, "to": n.to_phone, "message": n.message, "at": n.created_at} for n in rows]

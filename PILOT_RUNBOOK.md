@@ -13,6 +13,10 @@ How the ops team runs the service day to day.
 7. **Routes** (Ops → Routes): one route per vehicle per run, with children in drop-off order.
 8. **Dry run**: run the full journey for two weeks without children, using test cards.
 
+## Test SMS mode (before the sender ID is approved)
+
+Set `LITTLEGO_SMS_PROVIDER=outbox` on `littlego-api` in Render. Nothing is sent to phones; every sign-in code, PIN and alert appears in **Ops → Messages** (refreshes every 5 seconds), where ops can read them to testers. The readiness check shows this as blocking on purpose. Switch to `termii` before any child rides.
+
 ## Every school day
 
 | Time (Lagos) | What happens | Who |

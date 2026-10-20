@@ -333,3 +333,21 @@ def test_payment_return_page(client, data, monkeypatch):
     with SessionLocal() as s:
         assert s.scalar(select(Booking.status).where(Booking.payment_ref == "LG-77-ee11")) == "active"
     assert client.get("/payments/return?reference=nope").status_code == 404
+
+
+def test_outbox_test_mode(client, data, as_ops, monkeypatch):
+    # off by default: messages are never exposed
+    assert client.get("/ops/messages", headers=as_ops).status_code == 404
+    monkeypatch.setattr(settings, "sms_provider", "outbox")
+    client.post("/auth/otp/request", json={"phone": "08030000100"})
+    msgs = client.get("/ops/messages", headers=as_ops).json()
+    assert msgs[0]["to"] == "+2348030000100" and "code is" in msgs[0]["message"]
+    code = msgs[0]["message"].split("code is ")[1][:6]
+    assert client.post("/auth/otp/verify", json={"phone": "08030000100", "code": code}).status_code == 200
+    names = {c["name"]: c for c in client.get("/admin/readiness", headers=as_ops).json()["checks"]}
+    assert names["SMS provider"]["status"] == "fail" and "TEST MODE" in names["SMS provider"]["detail"]
+
+
+def test_outbox_messages_are_ops_only(client, data, as_school, monkeypatch):
+    monkeypatch.setattr(settings, "sms_provider", "outbox")
+    assert client.get("/ops/messages", headers=as_school).status_code == 403

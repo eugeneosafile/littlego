@@ -91,8 +91,20 @@ class AfricasTalkingSms:
         return recipients[0].get("messageId", "")
 
 
+class OutboxSms:
+    """Pilot-testing only: nothing is sent. Messages are kept in the notifications table and shown
+    to ops on the dashboard's Messages tab, so testers can sign in and receive PINs before the SMS
+    sender ID is approved. Never carry real children in this mode."""
+
+    def send(self, phone: str, message: str) -> str:
+        log.info("OUTBOX (not sent) to %s", phone)
+        return f"outbox-{secrets.token_hex(4)}"
+
+
 def sms() -> SmsProvider:
     kind = settings.sms_provider
+    if kind == "outbox":
+        return OutboxSms()
     if kind == "termii":
         return TermiiSms()
     if kind == "africastalking":

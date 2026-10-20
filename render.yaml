@@ -32,7 +32,7 @@ services:
       - key: LITTLEGO_OPS_ALERT_PHONES
         sync: false                # e.g. 08031234567,08037654321
       - key: LITTLEGO_SMS_PROVIDER
-        value: termii
+        sync: false                # outbox while testing (messages shown in Ops > Messages); termii for real SMS
       - key: LITTLEGO_TERMII_BASE_URL
         value: https://v4.api.termii.com
       - key: LITTLEGO_TERMII_API_KEY
@@ -82,7 +82,7 @@ services:
       - key: LITTLEGO_OPS_ALERT_PHONES
         fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_OPS_ALERT_PHONES }
       - key: LITTLEGO_SMS_PROVIDER
-        value: termii
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_SMS_PROVIDER }
       - key: LITTLEGO_TERMII_BASE_URL
         value: https://v4.api.termii.com
       - key: LITTLEGO_TERMII_API_KEY
@@ -118,7 +118,7 @@ services:
       - key: LITTLEGO_OPS_ALERT_PHONES
         fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_OPS_ALERT_PHONES }
       - key: LITTLEGO_SMS_PROVIDER
-        value: termii
+        fromService: { type: web, name: littlego-api, envVarKey: LITTLEGO_SMS_PROVIDER }
       - key: LITTLEGO_TERMII_BASE_URL
         value: https://v4.api.termii.com
       - key: LITTLEGO_TERMII_API_KEY
