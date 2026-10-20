@@ -39,6 +39,10 @@ services:
         value: paystack
       - key: LITTLEGO_PAYSTACK_SECRET_KEY
         sync: false
+      - key: LITTLEGO_PAYSTACK_CALLBACK_URL
+        sync: false            # https://<this service's URL>/payments/return
+      - key: LITTLEGO_PUBLIC_API_URL
+        sync: false            # https://<this service's URL>
       - key: LITTLEGO_PASSWORD_LOGIN_ENABLED
         value: "true"
 

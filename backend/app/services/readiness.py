@@ -77,7 +77,7 @@ def _provider_checks(live: bool) -> list[Check]:
         add("Paystack key", {"live": PASS, "test": WARN, "missing": FAIL}[mode], f"{mode} key",
             "Use the test key for dry runs; switch to sk_live_ after Paystack business verification.")
         add("Paystack return page", PASS if settings.paystack_callback_url else WARN,
-            settings.paystack_callback_url or "not set", "Set LITTLEGO_PAYSTACK_CALLBACK_URL.")
+            settings.paystack_callback_url or "not set", f"Set LITTLEGO_PAYSTACK_CALLBACK_URL to {settings.public_api_url}/payments/return")
         add("Paystack webhook", WARN, f"must point to {settings.public_api_url}/payments/paystack/webhook",
             "Set this URL in Paystack → Settings → API Keys & Webhooks (cannot be checked from here).")
         if live and k:

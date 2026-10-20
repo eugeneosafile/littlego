@@ -319,3 +319,17 @@ def test_dry_run_passes_and_cleans_up(data, monkeypatch):
     assert dry_run.main() == 0
     with SessionLocal() as s:
         assert s.scalar(select(User).where(User.name.like("DRY RUN%"))) is None
+
+
+def test_payment_return_page(client, data, monkeypatch):
+    monkeypatch.setattr(settings, "payment_provider", "paystack")
+    monkeypatch.setattr(settings, "paystack_secret_key", "sk_test_x")
+    with SessionLocal() as s:
+        s.add(Booking(child_id=data["tolu"], tier="shared", monthly_price=45_000, payment_ref="LG-77-ee11"))
+        s.commit()
+    monkeypatch.setattr(providers.PaystackPayments, "verify", lambda self, ref: (True, 4_500_000))
+    r = client.get("/payments/return?reference=LG-77-ee11&trxref=LG-77-ee11")
+    assert r.status_code == 200 and "Payment received" in r.text and "Tolu" in r.text
+    with SessionLocal() as s:
+        assert s.scalar(select(Booking.status).where(Booking.payment_ref == "LG-77-ee11")) == "active"
+    assert client.get("/payments/return?reference=nope").status_code == 404

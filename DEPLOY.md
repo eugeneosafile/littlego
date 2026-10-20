@@ -63,7 +63,7 @@ Deploy a **staging** copy first (a second Blueprint with names ending `-staging`
 ## 5. Paystack
 
 - Dashboard → Settings → API Keys & Webhooks → Webhook URL: `https://<your-api>/payments/paystack/webhook`
-- Set `LITTLEGO_PAYSTACK_CALLBACK_URL` to a simple "Payment complete, return to the LittleGo app" page (or `littlego://` once the store app exists).
+- Set `LITTLEGO_PAYSTACK_CALLBACK_URL` to `https://<your-api>/payments/return`. It confirms the payment, activates the plan and shows a "Return to the LittleGo app" button.
 - Test with Paystack's test cards and test bank before switching to `sk_live_…`.
 
 ## 6. Mobile apps
