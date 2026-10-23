@@ -81,6 +81,7 @@ export default function WaitlistAdmin() {
   const [area, setArea] = useState('')
   const [downloading, setDownloading] = useState(false)
   const [loadedAt, setLoadedAt] = useState(0)
+  const [page, setPage] = useState(1)
 
   const load = useCallback(async () => {
     try { setData(await api<WaitlistData>('/ops/waitlist')); setLoadedAt(Date.now()); setErr('') }
@@ -90,7 +91,9 @@ export default function WaitlistAdmin() {
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return (data?.signups ?? []).filter(s =>
+    return [...(data?.signups ?? [])]
+      .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id - a.id)
+      .filter(s =>
       (!area || s.area === area) &&
       (!q || [s.full_name, s.email, s.phone ?? '', areaName(s.area), s.area.replace(/_/g, ' ')].some(v => v.toLowerCase().includes(q))))
   }, [data, query, area])
@@ -118,6 +121,12 @@ export default function WaitlistAdmin() {
 
   if (!data) return err ? <Notice kind="error">{err}</Notice> : <p className="muted">Loading the waitlist…</p>
 
+  const PER_PAGE = 10
+  const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE))
+  const current = Math.min(page, pages)
+  const first = (current - 1) * PER_PAGE
+  const pageRows = shown.slice(first, first + PER_PAGE)
+
   const areas = Object.entries(data.by_area)
   const topArea = areas[0]
   const maxArea = topArea ? topArea[1] : 0
@@ -139,7 +148,7 @@ export default function WaitlistAdmin() {
               {areas.map(([code, n]) => (
                 <li key={code}>
                   <button type="button" className={`bar-row ${area === code ? 'active' : ''}`}
-                    onClick={() => setArea(area === code ? '' : code)} aria-pressed={area === code}
+                    onClick={() => { setArea(area === code ? '' : code); setPage(1) }} aria-pressed={area === code}
                     title={area === code ? 'Show all areas' : 'Show only this area'}>
                     <span className="bar-label">{areaName(code)}</span>
                     <span className="bar-track"><span className="bar-fill" style={{ width: `${(n / maxArea) * 100}%` }} /></span>
@@ -166,8 +175,8 @@ export default function WaitlistAdmin() {
       <Card title="Everyone on the waitlist" extra={`${shown.length} of ${data.signups.length}`}>
         <div className="form-row waitlist-tools">
           <input placeholder="Search name, email, phone or area" value={query}
-            onChange={e => setQuery(e.target.value)} aria-label="Search the waitlist" />
-          <select value={area} onChange={e => setArea(e.target.value)} aria-label="Filter by area">
+            onChange={e => { setQuery(e.target.value); setPage(1) }} aria-label="Search the waitlist" />
+          <select value={area} onChange={e => { setArea(e.target.value); setPage(1) }} aria-label="Filter by area">
             <option value="">All areas</option>
             {areas.map(([code, n]) => <option key={code} value={code}>{areaName(code)} ({n})</option>)}
           </select>
@@ -182,11 +191,12 @@ export default function WaitlistAdmin() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>Joined</th><th>Name</th><th>Email</th><th>Phone</th><th>Area</th><th>Journeys</th><th>When</th><th>Status</th></tr>
+                <tr><th className="sn">SN</th><th>Joined</th><th>Name</th><th>Email</th><th>Phone</th><th>Area</th><th>Journeys</th><th>When</th><th>Status</th></tr>
               </thead>
               <tbody>
-                {shown.map(s => (
+                {pageRows.map((s, i) => (
                   <tr key={s.id}>
+                    <td className="sn">{first + i + 1}</td>
                     <td className="muted" style={{ whiteSpace: 'nowrap' }}>{fmtDate(s.created_at)}</td>
                     <td><strong>{s.full_name}</strong></td>
                     <td><a href={`mailto:${s.email}`}>{s.email}</a></td>
@@ -203,9 +213,32 @@ export default function WaitlistAdmin() {
             </table>
           </div>
         )}
+        {shown.length > PER_PAGE && (
+          <nav className="pager" aria-label="Waitlist pages">
+            <span className="muted">Showing {first + 1}–{first + pageRows.length} of {shown.length}</span>
+            <div className="row">
+              <button className="btn small" type="button" onClick={() => setPage(current - 1)} disabled={current === 1}>Previous</button>
+              {pageList(current, pages).map((n, i) => n === 0
+                ? <span key={`gap${i}`} className="muted" aria-hidden="true">…</span>
+                : <button key={n} type="button" className={`btn small ${n === current ? 'primary' : ''}`}
+                    aria-current={n === current ? 'page' : undefined} aria-label={`Page ${n}`} onClick={() => setPage(n)}>{n}</button>)}
+              <button className="btn small" type="button" onClick={() => setPage(current + 1)} disabled={current === pages}>Next</button>
+            </div>
+          </nav>
+        )}
         {data.signups.length > 0 && shown.length === 0 && <p className="muted">No one matches that search.</p>}
         <p className="muted waitlist-note">Personal data: use it only to contact people about LittleGo's launch, as the Privacy Policy says. Don't share the CSV outside the team.</p>
       </Card>
     </>
   )
+}
+
+/** Page numbers to show: always first and last, plus neighbours of the current page; 0 marks a gap. */
+function pageList(current: number, pages: number): number[] {
+  const out: number[] = []
+  for (let n = 1; n <= pages; n++) {
+    if (n === 1 || n === pages || Math.abs(n - current) <= 1) out.push(n)
+    else if (out[out.length - 1] !== 0) out.push(0)
+  }
+  return out
 }

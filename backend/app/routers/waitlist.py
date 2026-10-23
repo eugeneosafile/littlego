@@ -165,7 +165,7 @@ async def join_waitlist(request: Request, db: Session = Depends(get_db)):
 
 
 def _rows(db: Session) -> list[WaitlistSignup]:
-    return list(db.scalars(select(WaitlistSignup).order_by(WaitlistSignup.created_at.desc())))
+    return list(db.scalars(select(WaitlistSignup).order_by(WaitlistSignup.created_at.desc(), WaitlistSignup.id.desc())))
 
 
 @ops.get("/waitlist")

@@ -306,3 +306,7 @@ ol.stops.editable li { display: flex; justify-content: space-between; gap: 8px; 
 /* Keep wide tables scrolling inside their card instead of widening the page on phones */
 .page { min-width: 0; }
 .card { min-width: 0; }
+.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-top: 14px; }
+.pager .row { flex-wrap: wrap; gap: 6px; }
+.pager .btn.small { min-width: 36px; }
+td.sn, th.sn { width: 1%; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
