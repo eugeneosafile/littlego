@@ -34,11 +34,9 @@ public = APIRouter(prefix="/public", tags=["website"])
 ops = APIRouter(prefix="/ops", tags=["ops centre"])
 Ops = Depends(require(Role.ops))
 
-Area = Literal[
-    "lagos_lekki_ajah", "lagos_vi_ikoyi", "lagos_ikeja", "lagos_gbagada_magodo",
-    "lagos_yaba_surulere", "lagos_festac_amuwo", "lagos_ikorodu", "lagos_alimosho",
-    "lagos_other", "abuja", "port_harcourt", "ibadan", "other_nigeria", "outside_nigeria",
-]
+# Area codes come from the website's config.js, so new areas can be added there without an
+# API change. The API checks only that the code is well formed.
+AREA_RE = re.compile(r"^[a-z0-9_]{2,40}$")
 Journey = Literal["school", "lessons", "sports_clubs", "other"]
 StartWindow = Literal["asap", "next_term", "within_6_months", "later"]
 
@@ -60,7 +58,7 @@ class WaitlistIn(BaseModel):
     full_name: str = Field(min_length=2, max_length=120)
     email: str = Field(max_length=254)
     phone: str | None = Field(default=None, max_length=20)
-    area: Area
+    area: str = Field(max_length=40)
     journeys: list[Journey] = Field(min_length=1, max_length=4)
     start_window: StartWindow | None = None
     consent: bool
@@ -86,6 +84,13 @@ class WaitlistIn(BaseModel):
         v = v.strip().lower()
         if not EMAIL_RE.match(v):
             raise ValueError("invalid email")
+        return v
+
+    @field_validator("area")
+    @classmethod
+    def _area(cls, v: str) -> str:
+        if not AREA_RE.match(v):
+            raise ValueError("invalid area")
         return v
 
     @field_validator("phone")

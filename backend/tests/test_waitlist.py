@@ -43,7 +43,7 @@ def test_repeat_email_updates_one_row_with_same_reply(client):
 
 
 def test_validation_errors_use_form_field_names(client):
-    r = _post(client, {**GOOD, "email": "bad", "journeys": [], "consent": False, "area": "mars"})
+    r = _post(client, {**GOOD, "email": "bad", "journeys": [], "consent": False, "area": "Not A Code!"})
     assert r.status_code == 422
     assert {"email", "journeys", "consent", "area"} <= set(r.json()["errors"])
     assert _count() == 0
@@ -89,3 +89,8 @@ def test_waitlist_is_ops_only(client, as_parent, as_school):
     assert client.get("/ops/waitlist").status_code in (401, 403)
     assert client.get("/ops/waitlist", headers=as_parent).status_code == 403
     assert client.get("/ops/waitlist.csv", headers=as_school).status_code == 403
+
+
+def test_new_area_codes_from_the_website_are_accepted(client):
+    assert _post(client, {**GOOD, "area": "lagos_shomolu_bariga"}).status_code == 201
+    assert _post(client, {**GOOD, "email": "x@y.com", "area": "x" * 41}, ip="4.4.4.4").status_code == 422
