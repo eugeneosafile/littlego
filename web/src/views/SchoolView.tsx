@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react'
 import { api, errMsg, post, time, type AlertEvent, type ChildStatus, type QueueItem, type Summary, type Trip } from '../api'
 import LiveMap from '../components/LiveMap'
-import { Alerts, Card, Fleet, Notice, Tile } from '../components/Shared'
+import { Alerts, Card, Fleet, Icon, Notice, PageHeader, Tile } from '../components/Shared'
 import { usePoll } from '../usePoll'
 
 const STATUS_LABEL: Record<ChildStatus, string> = {
-  scheduled: 'Waiting', released: 'Released', on_board: 'On board',
-  handed_over: 'Handed over', at_safe_hub: 'At safe hub', absent: 'Absent',
+  scheduled: 'In class', released: 'Released', on_board: 'On board',
+  handed_over: 'Home safe', at_safe_hub: 'At safe hub', absent: 'Absent',
 }
 
 export default function SchoolView() {
@@ -37,8 +37,10 @@ export default function SchoolView() {
     }
   }
 
+  const today = new Date().toLocaleDateString('en-GB', { timeZone: 'Africa/Lagos', weekday: 'long', day: 'numeric', month: 'long' })
   return (
     <>
+      <PageHeader title="Today at the gate" sub={`${today}. Scan each child's card as they leave, then hand them to the escort.`} />
       {summary && (
         <div className="tiles">
           <Tile label="Booked today" value={summary.booked_today} />
@@ -52,9 +54,10 @@ export default function SchoolView() {
         <Card title="Release queue" className="grow">
           <form className="scan" onSubmit={e => { e.preventDefault(); if (card) release(card) }}>
             <label className="sr-only" htmlFor="card">Child card ID</label>
-            <input id="card" placeholder="Scan the child's card (a USB QR scanner types here)" value={card}
+            <span className="scan-icon"><Icon name="qr" /></span>
+            <input id="card" placeholder="Scan a card. A USB QR scanner types here." value={card}
               onChange={e => setCard(e.target.value)} autoFocus />
-            <button className="btn primary" type="submit">Scan and release</button>
+            <button className="btn gold" type="submit">Release</button>
           </form>
           {msg && <Notice kind={msg.ok ? 'ok' : 'error'}>{msg.text}</Notice>}
           <div className="table-wrap">
@@ -63,7 +66,7 @@ export default function SchoolView() {
               <tbody>
                 {queue.map(q => (
                   <tr key={q.trip_child.id}>
-                    <td><strong>{q.trip_child.child.name}</strong></td>
+                    <td><span className="person"><span className="avatar sm">{q.trip_child.child.name.split(' ').map(p => p[0]).slice(0, 2).join('')}</span><strong>{q.trip_child.child.name}</strong></span></td>
                     <td>{q.trip_child.child.class_name}</td>
                     <td>{q.vehicle_code}</td>
                     <td><span className={`pill ${q.trip_child.status}`}>{STATUS_LABEL[q.trip_child.status]}</span></td>

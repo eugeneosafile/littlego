@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { api, post, type AlertEvent, type Trip } from '../api'
 import LiveMap from '../components/LiveMap'
-import { Alerts, Card, Fleet, Tile } from '../components/Shared'
+import { Alerts, Card, Fleet, type IconName, PageHeader, Tile } from '../components/Shared'
 import { usePoll } from '../usePoll'
 import CrewAdmin from './admin/CrewAdmin'
 import FamiliesAdmin from './admin/FamiliesAdmin'
@@ -12,18 +12,26 @@ import SchoolsAdmin from './admin/SchoolsAdmin'
 import TripsAdmin from './admin/TripsAdmin'
 import VehiclesAdmin from './admin/VehiclesAdmin'
 
-const TABS = ['Live', 'Trips', 'Routes', 'Families', 'Crew', 'Vehicles', 'Schools & staff', 'Pilot readiness', 'Messages'] as const
-type Tab = (typeof TABS)[number]
+export const OPS_NAV = [
+  { tab: 'Live', icon: 'live', sub: 'Every vehicle, child and alert, updated every 5 seconds.' },
+  { tab: 'Trips', icon: 'calendar', sub: 'Create the day’s trips from the routes.' },
+  { tab: 'Routes', icon: 'route', sub: 'Vehicles, crew and drop-off order for each run.' },
+  { tab: 'Families', icon: 'users', sub: 'Children, parents, plans and QR cards.' },
+  { tab: 'Crew', icon: 'shield', sub: 'Drivers and escorts, and their vetting.' },
+  { tab: 'Vehicles', icon: 'bus', sub: 'The fleet and its cameras.' },
+  { tab: 'Schools & staff', icon: 'school', sub: 'Partner schools, safe hubs and gate staff.' },
+  { tab: 'Pilot readiness', icon: 'check', sub: 'What still needs doing before children ride.' },
+  { tab: 'Messages', icon: 'message', sub: 'SMS the system has sent while in test mode.' },
+] as const satisfies readonly { tab: string; icon: IconName; sub: string }[]
+export type OpsTab = (typeof OPS_NAV)[number]['tab']
 
-export default function OpsView() {
-  const [tab, setTab] = useState<Tab>('Live')
+const lagosDate = () => new Date().toLocaleDateString('en-GB', { timeZone: 'Africa/Lagos', weekday: 'long', day: 'numeric', month: 'long' })
+
+export default function OpsView({ tab }: { tab: OpsTab }) {
+  const nav = OPS_NAV.find(n => n.tab === tab)!
   return (
     <>
-      <nav className="tabs" role="tablist" aria-label="Ops sections">
-        {TABS.map(t => (
-          <button key={t} role="tab" aria-selected={tab === t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>{t}</button>
-        ))}
-      </nav>
+      <PageHeader title={tab === 'Live' ? 'Live operations' : tab} sub={tab === 'Live' ? `${lagosDate()}. ${nav.sub}` : nav.sub} />
       {tab === 'Live' && <Live />}
       {tab === 'Trips' && <TripsAdmin />}
       {tab === 'Routes' && <RoutesAdmin />}

@@ -11,8 +11,8 @@ const LAGOS: [number, number] = [6.45, 3.45]
 const busIcon = (label: string, running: boolean) => L.divIcon({
   className: '',
   html: `<div class="bus-marker ${running ? 'running' : ''}">${label}</div>`,
-  iconSize: [56, 26],
-  iconAnchor: [28, 13],
+  iconSize: [62, 28],
+  iconAnchor: [31, 14],
 })
 
 export default function LiveMap({ trips }: { trips: Trip[] }) {
@@ -27,7 +27,7 @@ export default function LiveMap({ trips }: { trips: Trip[] }) {
       <MapContainer center={center} zoom={13} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
         <TileLayer url={TILES} attribution='&copy; OpenStreetMap contributors' />
         {[...schools.values()].map(s => (
-          <CircleMarker key={`s${s.id}`} center={[s.lat, s.lon]} radius={9} pathOptions={{ color: '#13232b', fillOpacity: 0.9 }}>
+          <CircleMarker key={`s${s.id}`} center={[s.lat, s.lon]} radius={9} pathOptions={{ color: '#0F2D5B', fillColor: '#0F2D5B', fillOpacity: 0.95, weight: 3 }}>
             <Tooltip>{s.name}</Tooltip>
           </CircleMarker>
         ))}
@@ -36,10 +36,10 @@ export default function LiveMap({ trips }: { trips: Trip[] }) {
           const line: [number, number][] = [[t.school.lat, t.school.lon], ...stops.map(c => [c.child.home_lat as number, c.child.home_lon as number] as [number, number])]
           return (
             <span key={t.id}>
-              <Polyline positions={line} pathOptions={{ color: '#0b6e4f', weight: 3, opacity: 0.5, dashArray: '6 6' }} />
+              <Polyline positions={line} pathOptions={{ color: '#008F7A', weight: 3, opacity: 0.7, dashArray: '6 7' }} />
               {stops.map(c => (
-                <CircleMarker key={c.id} center={[c.child.home_lat as number, c.child.home_lon as number]} radius={5}
-                  pathOptions={{ color: c.status === 'handed_over' ? '#1e3a68' : '#b45309', fillOpacity: 0.9 }}>
+                <CircleMarker key={c.id} center={[c.child.home_lat as number, c.child.home_lon as number]} radius={6}
+                  pathOptions={{ color: '#fff', weight: 2, fillColor: c.status === 'handed_over' ? '#F4B400' : '#24467F', fillOpacity: 1 }}>
                   <Tooltip>{c.stop_order}. {c.child.name} · {c.status.replace('_', ' ')}</Tooltip>
                 </CircleMarker>
               ))}

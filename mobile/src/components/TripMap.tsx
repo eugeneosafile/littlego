@@ -14,16 +14,16 @@ export default function TripMap({ vehicle, school, home, label }: MapPoint) {
         initialRegion={{ latitude: focus.lat, longitude: focus.lon, latitudeDelta: 0.04, longitudeDelta: 0.04 }}
         accessibilityLabel="Map of the vehicle, school and home"
       >
-        <Marker coordinate={{ latitude: school.lat, longitude: school.lon }} title="School" pinColor="#13232B" />
-        {home && <Marker coordinate={{ latitude: home.lat, longitude: home.lon }} title="Home" pinColor="#B45309" />}
-        {vehicle && <Marker coordinate={{ latitude: vehicle.lat, longitude: vehicle.lon }} title={label} pinColor="#0B6E4F" />}
+        <Marker coordinate={{ latitude: school.lat, longitude: school.lon }} title="School" pinColor="#0F2D5B" />
+        {home && <Marker coordinate={{ latitude: home.lat, longitude: home.lon }} title="Home" pinColor="#F4B400" />}
+        {vehicle && <Marker coordinate={{ latitude: vehicle.lat, longitude: vehicle.lon }} title={label} pinColor="#008F7A" />}
         {home && (
           <Polyline coordinates={[{ latitude: school.lat, longitude: school.lon }, { latitude: home.lat, longitude: home.lon }]}
-            strokeColor="#0B6E4F" strokeWidth={3} lineDashPattern={[6, 6]} />
+            strokeColor="#008F7A" strokeWidth={3} lineDashPattern={[6, 6]} />
         )}
       </MapView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({ wrap: { height: 220, borderRadius: 12, overflow: 'hidden' } });
+const styles = StyleSheet.create({ wrap: { height: 240, overflow: 'hidden' } });

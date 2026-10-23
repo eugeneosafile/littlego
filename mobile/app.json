@@ -2,7 +2,7 @@
   "expo": {
     "name": "LittleGo",
     "slug": "littlego",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,11 +13,11 @@
         "NSLocationWhenInUseUsageDescription": "LittleGo shares the vehicle's location with parents during school trips.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "2"
+      "buildNumber": "3"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0B6E4F",
+        "backgroundColor": "#0A1F3F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -37,7 +37,7 @@
           "apiKey": "REPLACE_WITH_GOOGLE_MAPS_ANDROID_KEY"
         }
       },
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -62,7 +62,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "backgroundColor": "#0B6E4F",
+          "backgroundColor": "#0A1F3F",
           "imageWidth": 220
         }
       ]
