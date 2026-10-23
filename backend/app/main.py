@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import Base, engine
-from .routers import admin, auth, crew, ops, parent, payments, school, ussd
+from .routers import admin, auth, crew, ops, parent, payments, school, ussd, waitlist
 
 logging.basicConfig(level=logging.INFO)
 
@@ -48,5 +48,5 @@ def health():
 
 
 for r in (auth.router, parent.router, crew.router, school.router, ops.router, admin.router,
-          payments.router, ussd.router):
+          payments.router, ussd.router, waitlist.public, waitlist.ops):
     app.include_router(r)

@@ -45,6 +45,10 @@ class Settings(BaseSettings):
 
     video_provider: str = "mock"
 
+    # ---- Website waitlist (littlego.ng) ----
+    waitlist_ip_salt: str = ""         # salt for hashing visitor IPs; falls back to jwt_secret
+    waitlist_max_per_ip_10min: int = 5
+
     # ---- One-time codes and rate limits ----
     otp_ttl_minutes: int = 10
     otp_max_attempts: int = 5

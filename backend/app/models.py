@@ -268,3 +268,28 @@ class RouteStop(Base):
 
     route: Mapped[Route] = relationship(back_populates="stops")
     child: Mapped[Child] = relationship()
+
+
+class WaitlistSignup(Base):
+    """Early-access interest from the littlego.ng website.
+
+    Deliberately minimal: no child names, schools or home addresses are ever collected.
+    """
+    __tablename__ = "waitlist_signups"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    full_name: Mapped[str] = mapped_column(String(120))
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    area: Mapped[str] = mapped_column(String(40), index=True)
+    journeys: Mapped[str] = mapped_column(String(80))  # comma separated: school,lessons,sports_clubs,other
+    start_window: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    consent_text: Mapped[str] = mapped_column(String(400))
+    consent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    source: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    utm_source: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    utm_medium: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    utm_campaign: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    ip_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    unsubscribed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

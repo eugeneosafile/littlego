@@ -63,6 +63,17 @@ Deploy a **staging** copy first (a second Blueprint with names ending `-staging`
 - Set `LITTLEGO_PAYSTACK_CALLBACK_URL` to `https://<your-api>/payments/return`. It confirms the payment, activates the plan and shows a "Return to the LittleGo app" button.
 - Test with Paystack's test cards and test bank before switching to `sk_live_…`.
 
+## 5b. Website waitlist (littlego.ng)
+
+The website lives in its own repository, `littlegoSite`. Its waitlist form posts to this API.
+
+1. On `littlego-api` → Environment, add the website to the allowed origins and redeploy:
+   `LITTLEGO_CORS_ORIGINS` = `https://littlego-dashboard.onrender.com,https://littlego.ng,https://www.littlego.ng`
+2. In `littlegoSite/config.js`, set `waitlistEndpoint` to `https://littlego-api.onrender.com/public/waitlist`.
+3. Optional: set `LITTLEGO_WAITLIST_IP_SALT` to any long random string (otherwise the JWT secret is used).
+
+Sign-ups are visible to ops at `GET /ops/waitlist` (with counts by area and journey) and download as a spreadsheet from `GET /ops/waitlist.csv`. The table is created automatically by the migration on the next deploy.
+
 ## 6. Mobile apps
 
 ```bash

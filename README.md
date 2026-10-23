@@ -25,6 +25,7 @@ Child-only school transport: vetted driver and escort on every trip, verified re
   - Handover PINs encrypted at rest.
   - Production start-up refuses unsafe settings.
   - Alembic migrations, CORS allow-list and security headers.
+  - Website waitlist: `POST /public/waitlist` for littlego.ng, with ops view and CSV export (`/ops/waitlist`, `/ops/waitlist.csv`).
   - API docs hidden in production.
   - Deactivated accounts lose access immediately.
   - All times in Lagos time.
