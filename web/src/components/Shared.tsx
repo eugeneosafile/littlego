@@ -46,6 +46,7 @@ const ICONS = {
   camera: 'M15 10l5-3v10l-5-3M3 7h12v10H3z',
   pin: 'M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12zM12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
   done: 'M5 12.5l4.5 4.5L19 7.5',
+  mail: 'M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5zM4 7l8 6 8-6',
 } as const
 export type IconName = keyof typeof ICONS
 

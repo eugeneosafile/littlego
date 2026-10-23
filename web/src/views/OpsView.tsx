@@ -11,6 +11,7 @@ import RoutesAdmin from './admin/RoutesAdmin'
 import SchoolsAdmin from './admin/SchoolsAdmin'
 import TripsAdmin from './admin/TripsAdmin'
 import VehiclesAdmin from './admin/VehiclesAdmin'
+import WaitlistAdmin from './admin/WaitlistAdmin'
 
 export const OPS_NAV = [
   { tab: 'Live', icon: 'live', sub: 'Every vehicle, child and alert, updated every 5 seconds.' },
@@ -21,6 +22,7 @@ export const OPS_NAV = [
   { tab: 'Vehicles', icon: 'bus', sub: 'The fleet and its cameras.' },
   { tab: 'Schools & staff', icon: 'school', sub: 'Partner schools, safe hubs and gate staff.' },
   { tab: 'Pilot readiness', icon: 'check', sub: 'What still needs doing before children ride.' },
+  { tab: 'Waitlist', icon: 'mail', sub: 'Parents who joined early access on littlego.ng.' },
   { tab: 'Messages', icon: 'message', sub: 'SMS the system has sent while in test mode.' },
 ] as const satisfies readonly { tab: string; icon: IconName; sub: string }[]
 export type OpsTab = (typeof OPS_NAV)[number]['tab']
@@ -40,6 +42,7 @@ export default function OpsView({ tab }: { tab: OpsTab }) {
       {tab === 'Vehicles' && <VehiclesAdmin />}
       {tab === 'Schools & staff' && <SchoolsAdmin />}
       {tab === 'Pilot readiness' && <ReadinessAdmin />}
+      {tab === 'Waitlist' && <WaitlistAdmin />}
       {tab === 'Messages' && <MessagesAdmin />}
     </>
   )
