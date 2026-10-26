@@ -3,7 +3,7 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 
 import type { MapPoint } from './mapTypes';
 
-// Android release builds need a Google Maps API key in app.json (android.config.googleMaps.apiKey).
+// Android builds need a Google Maps key: the GOOGLE_MAPS_ANDROID_KEY EAS variable, read by app.config.js.
 // Expo Go works without one for testing.
 export default function TripMap({ vehicle, school, home, label }: MapPoint) {
   const focus = vehicle ?? school;

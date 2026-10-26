@@ -2,7 +2,7 @@
   "expo": {
     "name": "LittleGo",
     "slug": "littlego",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,7 +13,7 @@
         "NSLocationWhenInUseUsageDescription": "LittleGo shares the vehicle's location with parents during school trips.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "3"
+      "buildNumber": "4"
     },
     "android": {
       "adaptiveIcon": {
@@ -32,12 +32,7 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "config": {
-        "googleMaps": {
-          "apiKey": "REPLACE_WITH_GOOGLE_MAPS_ANDROID_KEY"
-        }
-      },
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -79,10 +79,18 @@ Sign-ups are visible to ops at `GET /ops/waitlist` (with counts by area and jour
 ```bash
 cd mobile
 # set your API URL in eas.json (preview and production profiles)
-# put the Google Maps Android key in app.json → android.config.googleMaps.apiKey
+# the Google Maps Android key is an EAS environment variable, read by app.config.js (see below)
 npx eas-cli@latest login
 npx eas-cli@latest build --profile preview --platform android   # an APK you can share with pilot parents and crew
 ```
+
+**Google Maps key (Android map).** The key is not in git. Store it once as an EAS environment variable and every build reads it:
+
+```bash
+npx eas-cli@latest env:create --name GOOGLE_MAPS_ANDROID_KEY --value <key> --environment preview --environment production --visibility sensitive
+```
+
+In Google Cloud the key is restricted to Android apps (package `com.littlego.app` plus the SHA-1 from `npx eas-cli@latest credentials`) and to the Maps SDK for Android only. When the app goes on the Play Store, add the Play App Signing SHA-1 to the same key.
 
 For the pilot, an Android APK shared directly is the fastest route. Publish to the Play Store and App Store once the pilot is stable (store review takes days, and Apple needs a paid developer account).
 

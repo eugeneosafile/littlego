@@ -18,12 +18,14 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://littlego-api.onrender.com"
-      }
+      },
+      "environment": "preview"
     },
     "production": {
       "env": {
         "EXPO_PUBLIC_API_URL": "https://littlego-api.onrender.com"
-      }
+      },
+      "environment": "production"
     }
   },
   "submit": {
